@@ -2,60 +2,73 @@
 
 > **Status:** planning. No code yet. Nothing below is built or verified unless the status table says so.
 
-**A QR code you hear instead of scan.**
+**Any speaker can talk to your glasses.**
 
-Display glasses can show you things and hear you, but they cannot see. They can't scan a QR code, read NFC, or look for nearby Bluetooth devices. Chirp gives them a way to receive from the world through the one sense they have: the microphone.
+Display glasses can show you things and hear you, but they cannot see. They have no camera, no NFC, and apps get no Bluetooth scanning. Chirp makes the microphone their way to receive from the world. A phone, laptop, PA system or livestream plays a short chirp carrying a small code. The glasses hear it, and the right thing appears on the lens. One tap acts on it.
 
-A nearby phone, laptop or tablet plays a short chirp. The glasses hear it, decode a small token from the sound, and show a card on the lens. One tap acts on it.
+The sender needs no app install, no pairing, no Wi-Fi link to the glasses and no GPS. The sound alone carries the code, to one person or a whole room at once.
 
-## What it does
+## What it does: four layers
 
-| Flow | Sender | What the wearer sees | One tap does |
-|---|---|---|---|
-| **Connect** | Someone's phone (Telegram Mini App) | `Sam Reyes · founder · tap to connect` | Sends Sam a Telegram intro and saves the contact with where you met |
-| **Talk** | Speaker's laptop (web page) | `Slides + channel for "Building on TON"` | Saves the slides link and joins the Telegram channel |
-| **Pay** | Counter tablet (web page) | `Café Noor · 9.50 USDT · tap to pay` | Opens the payment request on the wearer's phone wallet (testnet). The glasses never sign anything |
+| Layer | What it is | Example |
+|---|---|---|
+| **1. Hand-off** | One device passes one thing to one wearer | Someone's phone chirps their card, tap, connected on Telegram |
+| **2. Broadcast** | One speaker reaches every wearer in the room | The speaker's audio carries the session code, and every lens follows the current slide, a live poll (tap to vote) and the live subtitles |
+| **3. Presence** | Hearing the room's rotating code proves you were there | At the end of a talk: `✓ You were here · claim · tap`, giving a credential only people in the room can claim |
+| **4. Sync** | Sound as a clock | A livestream's audio carries markers, and the lens shows the exact market the host is talking about, with live odds |
+
+**Lead story: a live talk.** Every lens follows the slides. A poll pops up and the room votes with a tap. At the end, everyone who was physically present claims a presence credential. Nobody scans a QR code or opens an app.
 
 ## How it works
 
 ```
- sender device                       backend                          glasses app
- ─────────────                       ───────                          ───────────
- Mini App / web page ──create──▶ issue short-lived token
- plays chirp (token) ─ ─ ─ ─ sound through the air ─ ─ ─ ─ ─ ─ ─ ─▶ mic PCM 16 kHz
-                                                                     decode token
-                                 resolve token ◀────────────────── request card
-                                 return card  ──────────────────▶ show card on lens
-                                 run action   ◀────────────────── tap
- Telegram message / wallet link ◀────────────
+ speaker / sender                    server                          glasses app
+ ────────────────                    ──────                          ───────────
+ session key ──────────────────────▶ knows the key
+ audio carries code(slot) ─ ─ ─ sound through the air ─ ─ ─ ─ ─ ─ ▶ mic PCM 16 kHz
+   (new code every few seconds)                                      decode code
+                                     verify code ◀────────────────── report (code, time)
+                                     return lens state ────────────▶ slide / poll / card
+                                     record action ◀──────────────── tap (vote, claim, connect)
+ Telegram / wallet ◀────────────────
 ```
 
-- The sound carries **only a short random token**, never the contact, amount or link itself. The backend resolves it, so a recording of the chirp is useless after the token expires.
-- Tones stay below 8 kHz because the glasses microphone records at 16 kHz. The chirp is audible: a short beep, not ultrasonic.
-- All API calls go through our backend. No keys ship inside the glasses app.
+- The sound carries **only a short code**, never the content itself. The server turns codes into slides, polls, cards or claims.
+- Presence codes **change every few seconds** and come from the session key, so the server can check them and nobody can guess the next one.
+- Tones stay below 8 kHz because the glasses mic records at 16 kHz. The chirp is a short audible beep, not ultrasonic.
+- Every third-party call goes through the server, and no keys ship in the glasses app.
 
-Full design: [`docs/PLAN.md`](docs/PLAN.md). Build order: [`docs/ROADMAP.md`](docs/ROADMAP.md). Sound format: [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+Design: [`docs/PLAN.md`](docs/PLAN.md) · Build order: [`docs/ROADMAP.md`](docs/ROADMAP.md) · Sound format: [`docs/PROTOCOL.md`](docs/PROTOCOL.md)
 
 ## Verification status
 
 | Claim | Status |
 |---|---|
-| Token decodes from a chirp at 16 kHz in the glasses app (simulator) | ⏳ not yet tested |
+| A code decodes from a chirp at 16 kHz in the glasses app (simulator) | ⏳ not yet tested |
 | Decodes on real glasses through their own microphone | ⏳ not yet tested |
-| Connect flow sends a real Telegram message | ⏳ not yet built |
-| Talk flow joins a real Telegram channel | ⏳ not yet built |
-| Pay flow opens a real testnet payment request | ⏳ not yet built |
-| Replayed recording of an old chirp is rejected | ⏳ not yet built |
+| Decodes from a speaker's PA / laptop audio at room distance | ⏳ not yet tested |
+| Broadcast: lens follows a live session's slides and polls | ⏳ not yet built |
+| Presence: credential claimable only with codes heard live | ⏳ not yet built |
+| Presence: replayed old audio is rejected | ⏳ not yet built |
+| Hand-off: connect sends a real Telegram message | ⏳ not yet built |
+| Sync: livestream marker opens the matching live market | ⏳ not yet built |
 
 Rows only move to ✅ after a real run, with the evidence linked.
+
+## Known limits (stated up front)
+
+- **Livestream cheating:** someone watching a live stream of the room also hears the codes. Short code lifetimes plus normal stream delay block most of it. A very low-delay stream could still pass, and the docs say so rather than claiming otherwise.
+- **Audible:** every chirp is a short beep. It's fine in talks and streams, but the repeat rate has to stay low.
+- **Opt-in senders:** venues, speakers and streams must choose to chirp. Talks and streams are realistic now. Public spaces like stations and airports are later.
+- **Real glasses unverified:** the glasses mic path may filter tones. Simulator results do not prove real-device results.
 
 ## Repo layout (planned)
 
 ```
-apps/glasses/   glasses app: mic capture, decoder, lens cards, taps
-apps/sender/    Telegram Mini App + web sender (connect, talk, pay)
-apps/server/    backend: tokens, resolve, actions, Telegram bot
-packages/wire/  shared payload format, CRC, token encoding
+apps/glasses/   glasses app: mic capture, decoder, lens views, taps
+apps/sender/    speaker console, Telegram Mini App, livestream marker tool
+apps/server/    sessions, codes, verification, actions, Telegram bot, chain client
+packages/wire/  shared frame format, CRC, code derivation
 docs/           plan, roadmap, protocol
 ```
 
@@ -65,7 +78,7 @@ Not runnable yet. Setup steps land with the first working slice (roadmap phase 1
 
 ## Principles
 
-- **Real data only.** No mock contacts, fake payments or simulated messages anywhere in the product path.
-- **Money safety.** Testnet only. The app holds no funds and never signs; payment always confirms on the wearer's own phone wallet.
-- **Privacy.** The mic buffer lives in memory only. Nothing is recorded, uploaded or stored except decoded tokens.
-- **Fail closed.** A missing key or an unreachable service shows a plain error on the lens. It never shows a made-up card.
+- **Real data only.** No mock sessions, fake votes, invented claims or simulated messages in the product path.
+- **Money safety.** Testnet only. The app holds no funds and never signs. Anything on-chain confirms on the wearer's own wallet.
+- **Privacy.** The mic buffer lives in memory only and is decoded then dropped. Long press pauses listening. Only decoded codes leave the device.
+- **Fail closed.** A missing key or an unreachable service shows the real reason on the lens, never a made-up screen.
