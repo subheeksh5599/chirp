@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chirp sender</title>
+    <style>
+      body { font: 16px system-ui, sans-serif; max-width: 28rem; margin: 2rem auto; padding: 0 1rem; }
+      label { display: block; margin: 1rem 0 0.25rem; }
+      input, select, button { font: inherit; padding: 0.5rem; width: 100%; box-sizing: border-box; }
+      button { margin-top: 1rem; cursor: pointer; }
+      #log { margin-top: 1rem; font-family: ui-monospace, monospace; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <h1>Chirp sender</h1>
+    <label for="payload">Payload (up to 8 characters)</label>
+    <input id="payload" maxlength="8" value="HELLO123" />
+    <label for="protocol">Protocol</label>
+    <select id="protocol">
+      <option value="GGWAVE_PROTOCOL_AUDIBLE_NORMAL">Audible normal (most robust)</option>
+      <option value="GGWAVE_PROTOCOL_AUDIBLE_FAST" selected>Audible fast</option>
+      <option value="GGWAVE_PROTOCOL_DT_NORMAL">Dual-tone normal</option>
+      <option value="GGWAVE_PROTOCOL_DT_FAST">Dual-tone fast</option>
+    </select>
+    <label for="volume">Volume (1–100)</label>
+    <input id="volume" type="number" min="1" max="100" value="40" />
+    <button id="play">Chirp once</button>
+    <button id="repeat">Chirp every 5 s</button>
+    <div id="log"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
