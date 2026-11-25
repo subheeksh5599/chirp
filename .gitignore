@@ -9,3 +9,6 @@ runbook*.md
 .artifacts/
 .vercel
 .env*
+# public build-time config (no secrets)
+!apps/glasses/.env.production
+*.ehpk
