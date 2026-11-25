@@ -19,6 +19,28 @@ The sender needs no app install, no pairing, no Wi-Fi link to the glasses and no
 
 **Lead story: a live talk.** Every lens follows the slides. A poll pops up and the room votes with a tap. At the end, everyone who was physically present claims a presence credential. Nobody scans a QR code or opens an app.
 
+## Why it's useful every day
+
+Most of what people hear in a day is followed by "the link is in the chat", "scan this", "I'll send it to you" or "search for it later". Each one means stopping, taking the phone out and hunting for the thing. Chirp turns each of those moments into **one tap that lands in Telegram**.
+
+| Everyday moment | How often | Who chirps | What the lens shows | One tap does |
+|---|---|---|---|---|
+| **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host's phone or laptop, held near their mic | `Host shared: "Launch thread"` | Saves the link to your Telegram Saved Messages |
+| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the Mini App | `Sam Reyes · founder · tap to connect` | Bot sends the intro and saves where you met |
+| **Class, meetup or talk** ("scan before I change the slide") | Weekly, daily for students | The speaker's laptop | Current slide, live poll | Vote, save the deck, join the channel |
+| **Stream or podcast** ("check the market I'm talking about") | Daily for viewers | Mixed into the stream audio | The exact market with live odds | Saves it or places a paper bet |
+| **Counter or stall** ("scan to pay") | When you shop where crypto is accepted | The counter tablet | `Café Noor · 9.50 USDT` | Opens the testnet payment on your phone |
+| **Arriving somewhere** (Wi-Fi, menu, check-in) | Daily in offices and venues | A screen or speaker on the wall | `Office Wi-Fi · tap to save` | Sends the details to Saved Messages |
+
+### Design rules that make it a habit, not a demo
+
+1. **Every chirp ends in Telegram.** Links, contacts, decks, markets and bills all land as a message in your own chat with the bot, so you keep everything you heard without taking notes.
+2. **A daily "Heard" log.** The bot keeps `/heard`: everything your glasses caught today, with time and place, so you can find "that link from the morning call" in one search.
+3. **Anyone can send in 10 seconds.** The sender is a Telegram Mini App or a web page with nothing to install. If you can share a link, you can chirp it.
+4. **Missed it? It waits.** If the wearer is reading something else, the chirp queues and shows as `1 heard · tap to see` instead of being lost.
+5. **One tap for the obvious action, double-tap for the other.** Smart defaults per type (save, connect, vote, pay) mean no menus and no dictation.
+6. **Join late, still get it.** Broadcast sessions send the current state on every chirp, so someone walking in 20 minutes late sees the current slide and the open poll at once.
+
 ## How it works
 
 ```
@@ -52,12 +74,15 @@ Design: [`docs/PLAN.md`](docs/PLAN.md) · Build order: [`docs/ROADMAP.md`](docs/
 | Presence: replayed old audio is rejected | ⏳ not yet built |
 | Hand-off: connect sends a real Telegram message | ⏳ not yet built |
 | Sync: livestream marker opens the matching live market | ⏳ not yet built |
+| A chirp survives voice-call audio (group call, video call) and decodes on the listener's side | ⏳ not yet tested |
+| Every heard item lands in Telegram and shows in `/heard` | ⏳ not yet built |
 
 Rows only move to ✅ after a real run, with the evidence linked.
 
 ## Known limits (stated up front)
 
 - **Livestream cheating:** someone watching a live stream of the room also hears the codes. Short code lifetimes plus normal stream delay block most of it. A very low-delay stream could still pass, and the docs say so rather than claiming otherwise.
+- **Call audio:** voice calls compress sound and cut noise, which can damage tones. Calls use the most robust mode, and decode rates over real calls get measured before any claim is made.
 - **Audible:** every chirp is a short beep. It's fine in talks and streams, but the repeat rate has to stay low.
 - **Opt-in senders:** venues, speakers and streams must choose to chirp. Talks and streams are realistic now. Public spaces like stations and airports are later.
 - **Real glasses unverified:** the glasses mic path may filter tones. Simulator results do not prove real-device results.
