@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
     "typecheck": "tsc --noEmit -p .",
-    "pack": "npm run build && evenhub pack app.json dist -o chirp.ehpk --sdk-ver 0.0.16"
+    "pack": "npm run build && evenhub pack app.json dist -o chirp.ehpk --sdk-ver 0.0.16",
+    "build:hosted": "vite build --base /glasses/ --outDir ../web/dist/glasses --emptyOutDir"
   },
   "dependencies": {
     "@evenrealities/even_hub_sdk": "0.0.16",
