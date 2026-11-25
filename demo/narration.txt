@@ -1,0 +1,12 @@
+# ID|start_s|window_end_s|text
+1|0.3|4.5|Smart glasses can't scan a QR code. They have no camera.
+2|4.85|10.4|So Chirp uses sound. A soft chirp carries a code; one tap puts it in Telegram.
+3|11.0|15.7|Here, a phone chirps a bill for zero point one test tonne.
+4|16.2|21.5|The glasses hear it. The lens shows the shop, the amount, and what a tap does.
+5|22.0|26.6|One tap, and the bill is in Telegram, to pay from your own wallet.
+6|27.0|32.6|Setup is one message: send the code on the lens to the bot.
+7|33.0|37.5|A sound test confirms the glasses can hear that speaker.
+8|38.0|45.6|For a talk, the speaker writes slides in the web console. One line per slide or poll.
+9|46.0|53.0|Start chirping, and every lens in the room shows the slide. The code changes every five seconds.
+10|53.8|59.2|Presence needs several room codes. These glasses heard one, so there's no claim.
+11|59.6|67.0|It's live: a presence record anchored and a bill paid on testnet. The code and its tests are on GitHub.
