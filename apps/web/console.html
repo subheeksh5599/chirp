@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chirp · Speaker console</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <header class="top"><span class="mark">Chirp</span><a href="/">all tools</a></header>
+
+      <section id="setup">
+        <h1>Speaker console</h1>
+        <p class="lede">Every chirp from this page carries the room's current code. Anyone wearing Chirp glasses who hears it follows your slides, votes in polls, and can claim that they were here.</p>
+        <div class="panel">
+          <label for="title">Session title</label>
+          <input id="title" maxlength="80" placeholder="Building for glasses without a camera" />
+          <label for="deck">Slides, one per line</label>
+          <textarea id="deck" placeholder="Why glasses need ears | no camera, no NFC, no Bluetooth scan
+Poll: Ship weekly or monthly? | weekly | monthly
+Thanks for listening"></textarea>
+          <div class="muted" style="font-size: 0.85rem; margin-top: 0.4rem">
+            <code>Title | note</code> for a slide · <code>Poll: question | A | B</code> for a poll
+          </div>
+          <div class="row">
+            <div><label for="deckUrl">Deck link (https, optional)</label><input id="deckUrl" placeholder="https://…" /></div>
+            <div><label for="channelUrl">Telegram channel (optional)</label><input id="channelUrl" placeholder="https://t.me/…" /></div>
+          </div>
+          <div class="row">
+            <div><label for="minMinutes">Presence: minutes in the room</label><input id="minMinutes" type="number" min="1" max="600" value="10" /></div>
+            <div><label for="minCodes">Presence: codes heard</label><input id="minCodes" type="number" min="2" max="100" value="3" /></div>
+          </div>
+          <button id="create">Start session</button>
+          <div class="status" id="setup-status"></div>
+        </div>
+      </section>
+
+      <section id="live" class="hidden">
+        <h1 id="live-title"></h1>
+        <p class="lede">Session <code id="live-id"></code> · keep this tab open near your speaker or microphone.</p>
+
+        <div class="panel">
+          <div class="muted">Now showing</div>
+          <div class="big" id="slide-title"></div>
+          <div class="muted" id="slide-meta"></div>
+          <div class="row">
+            <button class="ghost" id="prev">← Previous</button>
+            <button class="ghost" id="next">Next →</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="stats">
+            <div class="stat"><b id="listeners">0</b><span>glasses in the room</span></div>
+            <div class="stat"><b id="votes">–</b><span id="votes-label">votes on this slide</span></div>
+            <div class="stat"><b id="claims">0</b><span>presence claims</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="row">
+            <div>
+              <label for="interval">Chirp every (seconds)</label>
+              <input id="interval" type="number" min="8" max="120" value="20" />
+            </div>
+            <div>
+              <label for="volume">Volume (1–40)</label>
+              <input id="volume" type="number" min="1" max="40" value="12" />
+            </div>
+          </div>
+          <div class="row">
+            <button id="auto">Start chirping</button>
+            <button class="ghost" id="once">Chirp once</button>
+          </div>
+          <div class="status" id="chirp-status"></div>
+        </div>
+
+        <div class="panel">
+          <div class="row">
+            <div>
+              <div class="muted">Live subtitles</div>
+              <div id="caption" class="lens" style="min-height: 3rem"></div>
+            </div>
+          </div>
+          <button class="ghost" id="subs">Start subtitles</button>
+          <div class="status" id="subs-status"></div>
+        </div>
+
+        <button class="ghost" id="end">End session and open claims</button>
+        <div class="status" id="end-status"></div>
+        <button class="ghost" id="new">New session</button>
+      </section>
+    </main>
+    <script type="module" src="/src/console.ts"></script>
+  </body>
+</html>
