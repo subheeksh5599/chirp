@@ -12,7 +12,9 @@ import { ChirpDecoder } from './decoder';
 import { Controller, type Input } from './controller';
 import { httpApi } from './http';
 
+// Builds call VITE_API_BASE. The dev server has none and uses same-origin /api, which vite proxies to :8787.
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? '';
+const HAS_SERVER = Boolean(API_BASE) || import.meta.env.DEV;
 const TEXT_ID = 1;
 const TEXT_NAME = 'lens';
 const $ = (id: string) => document.getElementById(id)!;
@@ -57,7 +59,7 @@ async function main() {
     return bridge.textContainerUpgrade(new TextContainerUpgrade({ containerID: TEXT_ID, containerName: TEXT_NAME, content }));
   };
 
-  if (!API_BASE) {
+  if (!HAS_SERVER) {
     await show('Chirp\nthis build has no server address\n\n2×tap: exit');
     return;
   }
