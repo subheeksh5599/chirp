@@ -1,0 +1,19 @@
+{
+  "package_id": "com.subheeksh.chirp",
+  "edition": "202601",
+  "name": "Chirp",
+  "version": "0.1.0",
+  "min_sdk_version": "0.0.16",
+  "entrypoint": "index.html",
+  "permissions": [
+    {
+      "name": "g2-microphone",
+      "desc": "Listens for short Chirp tones from nearby phones, laptops and speakers. Audio is decoded in memory and never recorded or uploaded."
+    },
+    {
+      "name": "phone-microphone",
+      "desc": "Optional: listens for Chirp tones through the phone microphone when the user picks phone listening. Audio is decoded in memory and never recorded or uploaded."
+    }
+  ],
+  "supported_languages": ["en"]
+}
