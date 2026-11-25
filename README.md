@@ -22,7 +22,7 @@ Display glasses can show you things and hear you, but they can't see. No camera,
 
 Chirp targets **Even Realities G2** glasses. Their apps are web pages that run inside the Even Hub app on the paired phone; `.ehpk` is that platform's app package.
 
-> **Verified so far:** everything runs against production services, and the glasses app runs in the official Even Hub simulator, which hears the room through the laptop mic. A phone chirping a shared link into the simulator opened the link card (simulator log: `heard HJ6YH7G4Y`, `card link Test link`). A phone as the sender: 10 of 10 at 30 cm. Not tested yet: real G2 glasses, a phone at 3–5 m, a live stream. The [status table](#whats-real-the-status-table) says which line is which.
+> **Verified so far:** everything runs against production services, and the glasses app runs in the official Even Hub simulator, which hears the room through the laptop mic. A phone chirping a shared link into the simulator opened the link card (simulator log: `heard HJ6YH7G4Y`, `card link Test link`). A phone as the sender: 10 of 10 at 30 cm. Not tested yet: real G2 glasses, a phone at 3–5 m, a live call or live stream, and a locked phone. The [status table](#whats-real-the-status-table) says which line is which.
 
 ```
 SOUND CARRIES A CODE  ≠  THE CODE CARRIES CONTENT  ≠  HEARING ONCE PROVES YOU WERE THERE
@@ -40,7 +40,7 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Sender tools (console, link, bill, markers, Mini App) | ✅ live | [chirp-liart-six-38.vercel.app](https://chirp-liart-six-38.vercel.app); the console and link screenshots above are from production |
 | Telegram bot | ✅ webhook set | message [@Chirp567_bot](https://t.me/Chirp567_bot); `GET /api/config` returns its name from its own token |
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
-| Sound through the air | ✅ simulator, Mac speaker → Mac mic | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
+| Sound through the air | ✅ simulator: Mac speaker → Mac mic, and a phone at 30 cm (10/10) and 1 m | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
 | Tests | ✅ 119 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
@@ -59,7 +59,7 @@ Every one of those ends in your Telegram chat with the bot, and `/heard` keeps t
 |---|---|
 | ![Speaker console on production: the lens preview shows the current slide exactly as listeners see it](docs/media/console.png) | ![Share-a-link page on production with the lens preview of the card](docs/media/link.png) |
 
-Each sender page shows the lens text the server will send, rendered by the same function, so the preview can't drift from what wearers see.
+The console, link, bill and Mini App pages show the lens text the server will send, rendered by the same function, so the preview can't drift from what wearers see.
 
 ## Table of contents
 
@@ -165,12 +165,12 @@ Glasses with a display already do messages, navigation, captions and AI answers.
 
 | Everyday moment | How often | Who chirps | What the lens shows | One tap does |
 |---|---|---|---|---|
-| **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host, from [Share a link](https://chirp-liart-six-38.vercel.app/link.html), phone near the mic | `Launch thread · from Host` | Saves the link to your Telegram |
-| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam · founder, Tidepool · @samreyes` | Both of you get a message and the contact in `/met` |
+| **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host, from [Share a link](https://chirp-liart-six-38.vercel.app/link.html), phone near the mic | `Launch thread` / `from Host` | Saves the link to your Telegram |
+| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam` / `founder, Tidepool` / `@samreyes` | Both of you get a message and the contact in `/met` |
 | **Class, meetup or talk** ("scan before I change the slide") | Weekly, daily for students | The speaker console | Current slide, live poll, subtitles | Vote, save the deck, claim presence |
 | **Stream or podcast** ("check the market I'm talking about") | Daily for viewers | Mixed into the stream audio | The market with live odds | Save it, or double-tap for a paper position |
-| **Counter or stall** ("scan to pay") | Where crypto is accepted | The counter page | `Café Noor · 0.5 TON · testnet` | Opens the payment in the wearer's wallet |
-| **Arriving somewhere** (Wi-Fi, menu) | Daily in offices and venues | A screen or speaker | `Office Wi-Fi · network Studio5 …` | Sends the details to Telegram |
+| **Counter or stall** ("scan to pay") | Where crypto is accepted | The counter page | `Cafe Noor` / `0.5 TON · testnet` | Opens the payment in the wearer's wallet |
+| **Arriving somewhere** (Wi-Fi, menu) | Daily in offices and venues | A screen or speaker | `Office Wi-Fi` / `network Studio5 …` | Sends the details to Telegram |
 
 Design rules that make it a habit rather than a demo:
 
@@ -186,7 +186,7 @@ Design rules that make it a habit rather than a demo:
 | Piece | What it does |
 |---|---|
 | `apps/glasses` | The glasses app: 16 kHz mic → decoder → server → lens card; taps, ring, swipe, long press; pairing; queue; offline retry; glasses/phone mic switch |
-| `apps/web` | Sender tools, each showing the exact lens text the server will send and the chirp's real waveform as it plays: speaker console (slides, polls, auto-chirp, live subtitles, end-and-claim), share-a-link, counter bill, stream markers with WAV export, the Telegram Mini App, a sound test, privacy policy |
+| `apps/web` | Sender tools, all showing the chirp's real waveform as it plays and, except stream markers, the exact lens text the server will send: speaker console (slides, polls, auto-chirp, live subtitles, end-and-claim), share-a-link, counter bill, stream markers with WAV export, the Telegram Mini App, a sound test, privacy policy |
 | `server` | One HTTP API plus the Telegram bot: devices and pairing, rotating room codes, presence rule and signed records, hand-offs, markers, paper positions, `/heard`, `/met`, `/paper`, on-chain checks |
 | `packages/wire` | Frame format, Crockford base32 codes, HMAC slot codes, presence rule, deck text format |
 | `packages/sound` | Soft chirp shaping: fades, low-pass, two copies per chirp |
@@ -257,7 +257,7 @@ sequenceDiagram
   API-->>G: card text (wrapped to 40 columns, lens-safe glyphs)
   G->>L: show the card with its tap hints
   L->>G: tap or double-tap
-  G->>API: POST /api/act {ref, tap}
+  G->>API: POST /api/act {ref, action: tap or double}
   API->>T: vote, contact, link, bill link or presence record
   API-->>G: the next card
 ```
@@ -409,11 +409,11 @@ Checked only when true on a real run.
 
 ## Limitations
 
-- **Livestream leakage.** Someone watching a low-delay live stream of the room hears the codes too. Slot tolerance is ±1 (about 10 seconds), which normal stream delay usually exceeds, but not always.
+- **Livestream leakage.** Someone watching a low-delay live stream of the room hears the codes too. Slot tolerance is ±1 (about 10 seconds), so a stream with less delay than that leaks valid codes. Real stream delay hasn't been measured yet.
 - **Audible.** Every chirp is a short, soft chime. Fine in talks and streams; it shouldn't repeat often.
 - **Senders opt in.** Speakers, hosts and shops choose to chirp. Public spaces are later.
 - **Real glasses untested.** The glasses mic path may process audio differently from the simulator. The phone-mic fallback is one swipe away.
-- **Through-the-air numbers so far come from the worst case** (a laptop into its own mic). A second device as sender is the next measurement.
+- **Through-the-air numbers are short-range so far.** A phone sender decoded 10 of 10 at 30 cm and 7 at 1 m; 3–5 m, chatter and music are still open.
 
 ## Security and privacy
 
