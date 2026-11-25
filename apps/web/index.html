@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chirp · Any speaker can talk to your glasses</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <header class="top"><span class="mark">Chirp</span></header>
+      <h1>Any speaker can talk to your glasses.</h1>
+      <p class="lede">Display glasses can show and hear, but they can't see: no camera, no NFC, no Bluetooth scan. Chirp turns a short, soft sound into the way they receive things. A phone, a laptop or a stream plays a chirp; the glasses hear it and the right card appears on the lens. One tap, and it lands in Telegram.</p>
+
+      <div class="panel">
+        <h2 style="margin-top: 0">Send a chirp</h2>
+        <ul class="list">
+          <li><div><b>Speaker console</b><div class="muted">Slides, live polls and presence for a talk, class or meetup.</div></div><a href="/console.html">Open</a></li>
+          <li><div><b>Chirp me</b><div class="muted">Share your contact card. Opens inside Telegram from the bot's menu button.</div></div><a id="bot" href="https://t.me/">Open bot</a></li>
+          <li><div><b>Counter bill</b><div class="muted">Chirp a TON testnet bill to a customer.</div></div><a href="/shop.html">Open</a></li>
+          <li><div><b>Stream markers</b><div class="muted">Put the market you're talking about on viewers' lenses.</div></div><a href="/marker.html">Open</a></li>
+          <li><div><b>Sound test</b><div class="muted">Play a raw test chirp to check a room.</div></div><a href="/test.html">Open</a></li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin-top: 0">On the glasses</h2>
+        <p class="muted" style="margin: 0">Open Chirp, send the 6-digit code on your lens to the bot, and keep the app open. Tap acts on a card, double-tap picks the other option, swipe goes back, long press pauses listening. Everything you heard is in <code>/heard</code>.</p>
+      </div>
+      <p class="muted" style="font-size: 0.85rem"><a href="/privacy.html">Privacy</a></p>
+    </main>
+    <script type="module">
+      fetch('/api/health').catch(() => {});
+      const bot = document.getElementById('bot');
+      bot.href = 'https://t.me/Chirp567_bot';
+    </script>
+  </body>
+</html>
