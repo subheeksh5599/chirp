@@ -5,7 +5,7 @@ import { migrate, dropSchema } from '../migrate.js';
 import { one, q } from '../db.js';
 import { setSender, type Outgoing } from '../notify.js';
 import { createDevice, deviceFromAuth, type Device } from '../devices.js';
-import { act, heard, sessionState } from '../app.js';
+import { act, heard, sessionState, RESOLVES_PER_MINUTE } from '../app.js';
 import { createSession, currentFrame, endSession, getSession, setSlide, tally, adminSession } from '../sessions.js';
 import { checkPayment, issueBill, issueConnect, issueLink } from '../handoff.js';
 import { createMarker, paperPositions } from '../markers.js';
@@ -122,6 +122,37 @@ describe('broadcast sessions', () => {
     const forged = await codeForSlot(hexToBytes('ab'.repeat(32)), slotOf(Date.now()));
     expect((await heard(device, encodeFrame({ type: 'B', code: forged }))).kind).toBe('error');
     expect((await heard(device, 'not a frame')).kind).toBe('error');
+  });
+  it('logs each rejected code with why it was refused', async () => {
+    const { device } = await pairedDevice();
+    const { id } = await createSession({ title: 'Replay log', slides: SLIDES });
+    const s = await getSession(id);
+    const old = encodeFrame({ type: 'B', code: await codeForSlot(hexToBytes(s.key_hex), slotOf(Date.now()) - 3) });
+    await heard(device, old);
+    await heard(device, 'not a frame');
+    const now = (await currentFrame(s)).frame;
+    await heard(device, now);
+    const rows = await q<{ frame: string; outcome: string }>(
+      `SELECT frame, outcome FROM $S.resolves WHERE device_id = $1 ORDER BY at`,
+      [device.id],
+    );
+    expect(rows).toEqual([
+      { frame: old, outcome: 'room-code-rejected' },
+      { frame: 'not a frame', outcome: 'not-a-code' },
+      { frame: now, outcome: 'ok' },
+    ]);
+  });
+  it('a device spamming chirps is slowed down; other devices are not', async () => {
+    const spammer = await pairedDevice();
+    const other = await pairedDevice();
+    for (let i = 0; i < RESOLVES_PER_MINUTE; i++) await heard(spammer.device, 'HZZZZZZZZ');
+    await expect(heard(spammer.device, 'HZZZZZZZZ')).rejects.toMatchObject({ status: 429 });
+    expect((await heard(other.device, 'HZZZZZZZZ')).kind).toBe('error');
+    const http = await route({
+      method: 'POST', path: '/api/heard', query: new URLSearchParams(),
+      headers: { authorization: `Bearer ${spammer.token}` }, body: { frame: 'HZZZZZZZZ' },
+    });
+    expect(http.status).toBe(429);
   });
   it('tap saves links to Telegram on a normal slide', async () => {
     const { device, tgId } = await pairedDevice();
