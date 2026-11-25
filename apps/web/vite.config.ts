@@ -14,6 +14,7 @@ export default defineConfig({
         console: page('console'),
         mini: page('mini'),
         shop: page('shop'),
+        link: page('link'),
         marker: page('marker'),
         test: page('test'),
         privacy: page('privacy'),
