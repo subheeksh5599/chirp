@@ -15,7 +15,13 @@
         <h2>Microphone (glasses and phone)</h2>
         <p>The glasses app listens for Chirp tones. Audio stays in memory on your phone, is decoded on the spot, and is dropped. Nothing is recorded, stored or uploaded. Only a decoded 9-character code is sent to our server. A long press on the glasses pauses listening. The phone microphone is used only if you switch to it.</p>
         <h2 class="section">Network</h2>
-        <p>The app talks to one server, the Chirp API at the same domain as this page, hosted on Vercel with a Neon Postgres database.</p>
+        <p>The glasses app talks to one server: <code>chirp-liart-six-38.vercel.app</code>, the Chirp API, hosted on Vercel with a Neon Postgres database. That server, not your glasses, calls these services:</p>
+        <ul>
+          <li><code>api.telegram.org</code> to send what you heard to your Telegram chat.</li>
+          <li><code>testnet.toncenter.com</code> to read TON testnet transactions, so a bill or anchor shows as paid.</li>
+          <li><code>gamma-api.polymarket.com</code> for public market odds on stream markers.</li>
+          <li><code>api.groq.com</code> for speaker subtitles only.</li>
+        </ul>
         <h2 class="section">What we store</h2>
         <ul>
           <li>Your Telegram user id, name and username, once you pair, so we can send what you heard to your Telegram chat.</li>
