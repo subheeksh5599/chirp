@@ -14,7 +14,7 @@ import { handleUpdate } from '../bot.js';
 import { route } from '../router.js';
 import { verifyRecord } from '../crypto.js';
 import { verifyInitData } from '../telegram.js';
-import { render, wrap } from '../lens.js';
+import { LENS_GLYPHS, lensSafe, render, wrap } from '../lens.js';
 
 const outbox: Outgoing[] = [];
 const sentTo = (chatId: number) => outbox.filter((m) => String(m.chatId) === String(chatId));
@@ -154,6 +154,14 @@ describe('broadcast sessions', () => {
     });
     expect(http.status).toBe(429);
   });
+  it('the sound-test chirp says it was heard instead of looking like an expired card', async () => {
+    const { device } = await pairedDevice();
+    const c = await heard(device, 'HTEST0000');
+    expect(c.kind).toBe('info');
+    expect(c.lines[0]).toBe('Sound test heard');
+    const [row] = await q<{ outcome: string }>(`SELECT outcome FROM $S.resolves WHERE device_id = $1`, [device.id]);
+    expect(row.outcome).toBe('sound-test');
+  });
   it('tap saves links to Telegram on a normal slide', async () => {
     const { device, tgId } = await pairedDevice();
     const { id } = await createSession({ title: 'Links', slides: SLIDES, deckUrl: 'https://example.com/d', channelUrl: 'https://t.me/x' });
@@ -251,7 +259,7 @@ describe('hand-off: contact cards', () => {
     expect(c).toMatchObject({ kind: 'connect', tap: 'connect' });
     expect(c.lines).toEqual(['Sam', 'founder, Tidepool', '@samreyes']);
     const done = await act(wearer.device, c.ref, 'tap');
-    expect(done.lines[0]).toBe('✓ Connected with Sam');
+    expect(done.lines[0]).toBe('Connected with Sam');
     expect(sentTo(5150)[0].text).toMatch(/Priya Rao.*@priya.*wants to connect/);
     expect(sentTo(wearer.tgId)[0].text).toMatch(/Saved contact: <b>Sam<\/b> · founder, Tidepool · @samreyes/);
     const row = await one(`SELECT other_name, role FROM $S.contacts WHERE device_id = $1`, [wearer.device.id]);
@@ -306,7 +314,7 @@ describe('hand-off: links and notes', () => {
     expect(c).toMatchObject({ kind: 'link', tap: 'save to Telegram' });
     expect(c.lines).toEqual(['Launch thread', 'from Host']);
     const done = await act(device, c.ref, 'tap');
-    expect(done.lines[0]).toBe('✓ Saved to Telegram');
+    expect(done.lines[0]).toBe('Saved to Telegram');
     const m = sentTo(tgId)[0];
     expect(m.text).toContain('https://example.com/launch');
     expect(m.buttons?.[0][0]).toMatchObject({ text: 'Open link', url: 'https://example.com/launch' });
@@ -426,6 +434,19 @@ describe('router', () => {
     expect(me.body).toMatchObject({ paired: false });
     const h = await req('POST', '/api/heard', { frame: 'BABCDEFGH' }, { authorization: `Bearer ${token}` });
     expect((h.body as { text: string }).text).toMatch(/Not paired yet/);
+  });
+});
+
+describe('lens font', () => {
+  it('only characters the G2 font can draw reach the lens', () => {
+    const out = render({ kind: 'info', lines: ['✓ Saved “quoted” — ok’s', 'Café Noor → 0.5 TON'], tap: 'connect' });
+    for (const line of out.split('\n')) expect(line, line).toMatch(LENS_GLYPHS);
+    expect(out.split('\n')[0]).toBe('Saved "quoted" - ok\'s');
+    expect(out.split('\n')[1]).toBe('Cafe Noor > 0.5 TON');
+  });
+  it('keeps the hint symbols that render on the lens', () => {
+    expect(lensSafe('tap: a · 2×tap: b…')).toBe('tap: a · 2×tap: b…');
+    expect(lensSafe('Ana Müller 🎉')).toBe('Ana Muller ?');
   });
 });
 
