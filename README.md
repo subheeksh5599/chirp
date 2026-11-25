@@ -276,10 +276,10 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Broadcast: slides follow live, tap-to-vote polls | ✅ | `server/test/server.test.ts`, `apps/glasses/test/controller.test.ts`, `npm run e2e:room` |
 | Live subtitles via speech-to-text | ✅ | production `/api/sessions/:id/caption` returned the spoken sentence |
 | Presence: rule, signed record, public verify route | ✅ | `server/test/server.test.ts` |
-| Presence anchor on TON testnet | ✅ built, ⏳ no anchored record yet | `server/bot.ts` checks the wallet for the comment |
+| Presence anchor on TON testnet | ✅ record `27VHDCYT`: 6 room codes heard through the air by the simulator, signed, [anchored](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b) | `npm run presence:live`, then `npm run testnet -- anchor <id>`; [`/api/presence/27VHDCYT`](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT) shows `signatureValid: true` |
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
 | Sender pages preview exactly what the lens shows | ✅ | `server/test/server.test.ts` (`the console shows the same text a listener gets, slide and poll`) |
-| Bills on TON testnet | ✅ built, ⏳ no paid bill yet | `server/test/server.test.ts` (real testnet lookup) |
+| Bills on TON testnet | ✅ bill `DTJ5NFAM` paid 0.05 TON from a second wallet, [marked paid by production](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028) | `npm run testnet -- bill` |
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
 | `/heard`, `/met`, `/paper` | ✅ | `server/test/server.test.ts` |
 | Packs to `.ehpk` | ✅ | `npm run pack -w @chirp/glasses` |
@@ -297,13 +297,13 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 Checked only when true on a real run.
 
 **Works end to end**
-- [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, issuing bills), sync (markers, paper positions) all run against production services
+- [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, bills), sync (markers, paper positions) all run against production services
 - [x] Every heard item lands in Telegram and shows in `/heard`
 - [x] Replay, forgery and single-shared-code attacks are refused by tests
 - [x] Decode rates published through call, stream and podcast codecs ([measurements §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline))
 - [ ] Decode rate published for a phone sender across a room
 - [ ] Decode rate measured on a live call with the call app's noise suppression on
-- [ ] A presence record anchored and a bill paid on TON testnet with the transaction linked here
+- [x] A bill paid on TON testnet ([bill `DTJ5NFAM`](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028)) and a presence record anchored ([record `27VHDCYT`](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b), [verify it](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT))
 
 **Ships like a real app**
 - [x] Manifest valid: `com.subheeksh.chirp`, name "Chirp", `0.1.0`, `min_sdk_version` set, only used permissions; packs to `.ehpk`
@@ -395,8 +395,10 @@ npm run bench:codec           # codec decode rates at 16 kHz with noise
 npm run bench:channels        # decode rates through call, stream and podcast codecs (needs ffmpeg)
 npm run check:whitelist       # the glasses build reaches only the manifest's whitelisted origins
 npm run icon                  # regenerate the store icon (apps/glasses/icon.png)
-npm run payer -- new          # testnet-only payer wallet, mnemonic kept in .env
+npm run payer -- new          # testnet-only payer wallet, mnemonic kept in .env (fund it with `acton wallet airdrop` or @testgiver_ton_bot)
 npm run testnet -- bill       # issue a bill on prod, pay it from the payer, wait until prod sees it
+npm run presence:live         # a real session on prod, room codes played into the simulator, claim tapped
+npm run testnet -- anchor <id> # pay a presence record's anchor and run the bot's own check
 ```
 
 The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.env.production` for builds). Deploying: `npx vercel deploy --prod` with the same variables set in the Vercel project.

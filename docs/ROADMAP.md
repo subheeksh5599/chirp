@@ -34,7 +34,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 3: Presence
 
-**Status: done except the testnet anchor.** Signed records and the shared-code refusal are tested (`codes spread over the session qualify; a claim is signed and sent to Telegram`, `one code shared in a chat does not qualify`). The anchor transfer is scripted (`npm run testnet -- anchor <id>`) and waits on a funded payer wallet.
+**Status: done.** Signed records and the shared-code refusal are tested (`codes spread over the session qualify; a claim is signed and sent to Telegram`, `one code shared in a chat does not qualify`). Record `27VHDCYT` came from a real run through the air and is anchored on TON testnet (linked in the README).
 
 - Presence rule (several codes spread across the session) with unit tests.
 - Claim on the lens, and a signed presence record delivered through the bot.
@@ -44,7 +44,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 4: Hand-off
 
-**Status: done in tests and on prod; two real accounts not connected yet.** Contacts, links and bills pass server tests against the real database. A paid bill is scripted (`npm run testnet -- bill`) and waits on a funded payer wallet.
+**Status: done in tests and on prod; two real accounts not connected yet.** Contacts, links and bills pass server tests against the real database. Bill `DTJ5NFAM` was paid on TON testnet from a second wallet and production marked it paid.
 
 - Telegram Mini App sender for cards.
 - Tap sends the intro and saves the contact (`/met`).
