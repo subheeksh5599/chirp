@@ -414,7 +414,7 @@ describe('bot log commands', () => {
     await handleUpdate({ message: { chat: { id: 7373, type: 'private' }, from: { id: 7373, first_name: 'Noor' }, text: '/met' } });
     expect(sentTo(7373).at(-1)!.text).toMatch(/People you met[\s\S]*Lee · @lee/);
     // meeting again updates, never duplicates, on both sides
-    const again = await issueConnect(initDataFor({ id: 7373, first_name: 'Noor', username: 'noor' }));
+    const again = await issueConnect(initDataFor({ id: 7373, first_name: 'Noor', username: 'noor' }), undefined);
     await act(w.device, (await heard(w.device, again.frame)).ref, 'tap');
     const rows = await q<{ owner_tg_id: string }>(`SELECT owner_tg_id FROM $S.contacts WHERE other_tg_id IN ($1, 7373) AND owner_tg_id IN ($1, 7373)`, [w.tgId]);
     expect(rows).toHaveLength(2);
