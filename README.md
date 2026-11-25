@@ -7,14 +7,16 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-110%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-119%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
 
-**[ For judges ↓ ](#for-judges-and-reviewers)** · **[ See it in one command ↓ ](#-see-it-in-one-command)** · **[ Measurements ↓ ](#what-the-sound-measurements-say)** · **[ Status table ↓ ](#whats-real-the-status-table)** · **[ Architecture ↓ ](#architecture)**
+**[ Watch the demo ▶ ](https://youtu.be/qwdeAFHoWMI)** · **[ For judges ↓ ](#for-judges-and-reviewers)** · **[ See it in one command ↓ ](#-see-it-in-one-command)** · **[ Measurements ↓ ](#what-the-sound-measurements-say)** · **[ Status table ↓ ](#whats-real-the-status-table)** · **[ Architecture ↓ ](#architecture)**
 
 </div>
+
+<p align="center"><a href="https://youtu.be/qwdeAFHoWMI"><img src="https://img.youtube.com/vi/qwdeAFHoWMI/maxresdefault.jpg" width="720" alt="Chirp demo video, 1 minute: a phone chirps a bill, the glasses show it, one tap sends it to Telegram"></a><br><sub>▶ <a href="https://youtu.be/qwdeAFHoWMI">Watch the 1-minute demo</a> (simulator and phone, recorded live)</sub></p>
 
 Display glasses can show you things and hear you, but they can't see. No camera, no NFC, and apps get no Bluetooth scanning, so every "scan this", "the link is in the chat" and "what's your Telegram?" still needs the phone to come out. **Chirp makes the microphone the glasses' way to receive from the world.** A phone, a laptop, a PA system or a stream plays a short, soft chirp that carries a 9-character code. The glasses hear it, the server turns the code into a card, and the lens shows it. One tap acts on it, and the result lands in Telegram.
 
@@ -40,7 +42,7 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator, Mac speaker → Mac mic | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
-| Tests | ✅ 110 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 119 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -390,7 +392,7 @@ Checked only when true on a real run.
 **Honest and reproducible**
 - [x] Tests pass in CI
 - [x] Prior work listed under [Built on](#built-on)
-- [ ] Demo video in this README
+- [x] Demo video in this README ([1 minute on YouTube](https://youtu.be/qwdeAFHoWMI))
 
 ## Attack → test
 
@@ -463,7 +465,7 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 110 tests (server tests use a throwaway schema)
+npm test                      # 119 tests (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
 npm run bench:channels        # decode rates through call, stream and podcast codecs (needs ffmpeg)
@@ -481,18 +483,19 @@ The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.en
 
 | Suite | Tests |
 |---|---|
-| `server/test/server.test.ts` | 39 |
+| `server/test/server.test.ts` | 43 |
 | `packages/wire/test/wire.test.ts` | 19 |
 | `packages/wire/test/properties.test.ts` | 13 |
-| `apps/glasses/test/controller.test.ts` | 9 |
+| `apps/glasses/test/controller.test.ts` | 10 |
 | `packages/sound/test/soften.test.ts` | 7 |
 | `scripts/test/whitelist.test.ts` | 5 |
+| `apps/glasses/test/dedupe.test.ts` | 4 |
 | `scripts/test/icon.test.ts` | 4 |
 | `packages/sound/test/sound.test.ts` | 4 |
 | `packages/wire/test/deck.test.ts` | 4 |
 | `scripts/test/privacy.test.ts` | 3 |
 | `apps/web/test/envelope.test.ts` | 3 |
-| **Total** | **110** |
+| **Total** | **119** |
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. Server and controller tests run against the real database in a throwaway schema, and the market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
