@@ -64,18 +64,15 @@ The lead user is the **audience at a live talk**, because broadcast and presence
 - Inputs: tap = primary action, double-tap = secondary or dismiss, long press = pause listening.
 - Pairing: 6-digit code through the Telegram bot. Google sign-in doesn't work in this WebView.
 
-### 4.2 Sender apps (`apps/sender`)
+### 4.2 Sender apps (`apps/web`)
 - **Speaker console** (web): sessions, deck, polls, chirp timer, live results, subtitle stream.
 - **Telegram Mini App**: hand-off cards and counter bills.
 - **Livestream marker tool** (web): tag moments, and the tool outputs chirp audio to mix into the stream.
 
-### 4.3 Server (`apps/server`)
-- TypeScript, Node. HTTP API plus Telegram bot. SQLite first, Postgres later.
+### 4.3 Server (`server`, deployed as one Vercel function)
+- TypeScript, Node. HTTP API plus Telegram bot, on Neon Postgres.
 - Endpoints:
-  - `POST /sessions`, `POST /sessions/:id/slide`, `POST /sessions/:id/poll`
-  - `POST /heard` (code, slot, device time) → lens state
-  - `POST /votes`, `POST /presence/claim`, `POST /handoff/:code/act`
-  - `POST /pair`, `GET /health` (booleans only)
+  - The built routes are listed in the README API table. The glasses make two calls: `POST /api/heard` (frame → card) and `POST /api/act` (tap or double-tap on a card).
 - Bot: pairing, intros, `/met`, links for talks, presence-record delivery.
 - Chain client: builds testnet transactions for presence anchoring and payments and returns them as wallet links. Holds no keys for wearers.
 
@@ -84,16 +81,16 @@ The lead user is the **audience at a live talk**, because broadcast and presence
 
 ## 5. Security and safety
 
-| Risk | Control |
-|---|---|
-| A code is shared in a group chat | One code never qualifies. Presence needs several codes spread across the session |
-| A recording is replayed later | Codes are tied to 5 s slots. Old slots are rejected and replays are logged |
-| A livestream of the room | Short slots plus the usual stream delay block most cases. A low-delay stream can still pass, which is a documented limit. Organisers can require more codes or a longer stay |
-| A forged code | Without the session key you can't produce a valid code, and random sounds decode to nothing |
-| Spam chirps | The CRC drops noise, the server rejects unknown codes, and resolves are rate-limited per device |
-| Wrong payment | The lens shows the shop, amount and memo, and the wallet shows them again. The app never signs |
-| Mic privacy | In-memory buffer only, nothing recorded or uploaded. Long press pauses listening |
-| Keys in the client | None. All third-party calls go through the server |
+| Risk | Control | Test |
+|---|---|---|
+| A code is shared in a group chat | One code never qualifies. Presence needs several codes spread across the session | `one code shared in a chat does not qualify` |
+| A recording is replayed later | Codes are tied to 5 s slots. Old slots are rejected and replays are logged | `rejects a recording of an old code and a forged code`, `logs each rejected code with why it was refused` |
+| A livestream of the room | Short slots plus the usual stream delay block most cases. A low-delay stream can still pass, which is a documented limit. Organisers can require more codes or a longer stay | `matches the current slot and ±1, but not ±2`; `organisers can set a stricter or shorter rule` |
+| A forged code | Without the session key you can't produce a valid code, and random sounds decode to nothing | `rejects a code made with the wrong key` |
+| Spam chirps | The frame check drops noise, the server rejects unknown codes, and resolves are rate-limited per device | `any single character changed to a non-alphabet character is rejected`; `a device spamming chirps is slowed down; other devices are not` |
+| Wrong payment | The lens shows the shop, amount and memo, and the wallet shows them again. The app never signs | `a bill previews exactly what the wearer sees`; `tap sends a wallet link with a unique comment; unpaid until it is on-chain` |
+| Mic privacy | In-memory buffer only, nothing recorded or uploaded. Long press pauses listening | `root gestures: swipe switches mic, hold pauses, double-tap exits` |
+| Keys in the client | None. All third-party calls go through the server | `the real glasses build calls only whitelisted origins, and uses every one` |
 
 ## 6. Testing
 
