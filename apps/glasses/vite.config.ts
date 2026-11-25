@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url';
 const ART = resolve(dirname(fileURLToPath(import.meta.url)), '../../.artifacts');
 
 export default defineConfig({
+  // Dev: same-origin /api goes to the local API (npm run dev:api), like the sender tools.
+  // Builds call VITE_API_BASE instead (apps/glasses/.env.production).
+  server: { proxy: { '/api': 'http://127.0.0.1:8787' } },
   plugins: [
     {
       name: 'chirp-capture',
