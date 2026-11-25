@@ -13,7 +13,7 @@ $('#chirp').addEventListener('click', async () => {
   const btn = $('#chirp') as HTMLButtonElement;
   btn.disabled = true;
   try {
-    const r = await api<{ frame: string }>('/api/handoff/link', {
+    const r = await api<{ frame: string; lens: string }>('/api/handoff/link', {
       body: {
         title: val('#title'),
         url: val('#url') || undefined,
@@ -23,6 +23,7 @@ $('#chirp').addEventListener('click', async () => {
       },
     });
     frame = r.frame;
+    $('#lens').textContent = r.lens;
     $('#again').classList.remove('hidden');
     await chirp();
   } catch (e) {

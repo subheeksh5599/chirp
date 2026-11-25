@@ -3,28 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chirp · Counter</title>
+    <title>Counter bill: Chirp</title>
+    <meta name="description" content="Chirp a TON testnet bill to a customer wearing Chirp glasses." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <main>
-      <header class="top"><span class="mark">Chirp</span><a href="/">all tools</a></header>
+      <header class="top"><a class="mark" href="/">Chirp</a><a href="/">All tools</a></header>
       <h1>Counter bill</h1>
-      <p class="lede">Chirp a bill to a customer wearing Chirp glasses. They see the shop and amount on their lens, tap once, and confirm in their own wallet. TON testnet only: no real money.</p>
+      <p class="lede">The customer sees the bill on their lens, taps once, and confirms it in their own wallet. TON testnet only, no real money.</p>
       <div class="panel" id="form">
         <label for="shop">Shop name</label>
-        <input id="shop" maxlength="40" placeholder="Café Noor" />
+        <input id="shop" maxlength="40" placeholder="Your shop" />
         <div class="row">
           <div><label for="amount">Amount (testnet TON, up to 5)</label><input id="amount" type="number" min="0.01" max="5" step="0.01" value="0.5" /></div>
           <div><label for="memo">Memo (optional)</label><input id="memo" maxlength="60" placeholder="2 flat whites" /></div>
         </div>
-        <button id="chirp">Create bill and chirp</button>
+        <div class="actions"><button id="chirp">Create bill and chirp</button></div>
         <div class="status" id="status"></div>
       </div>
       <div class="panel hidden" id="waiting">
-        <div class="muted">Waiting for payment on TON testnet</div>
-        <div class="big" id="bill"></div>
-        <div class="row">
+        <h2>Waiting for payment on TON testnet</h2>
+        <div class="lens-frame"><div class="lens" id="lens"></div></div>
+        <p class="lens-caption">What the customer’s lens shows</p>
+        <canvas class="wave" aria-hidden="true"></canvas>
+        <div class="actions">
           <button class="ghost" id="again">Chirp again</button>
           <button class="ghost" id="reset">New bill</button>
         </div>

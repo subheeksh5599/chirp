@@ -3,31 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chirp · Share a link</title>
+    <title>Share a link: Chirp</title>
+    <meta name="description" content="Chirp a link or a note to everyone wearing Chirp glasses on a call or in the room." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <main>
-      <header class="top"><span class="mark">Chirp</span><a href="/">all tools</a></header>
+      <header class="top"><a class="mark" href="/">Chirp</a><a href="/">All tools</a></header>
       <h1>Share a link</h1>
-      <p class="lede">“The link is in the chat.” Instead, chirp it: hold your phone near your mic on a voice call, or play it in the room. Everyone wearing Chirp glasses sees it and saves it to Telegram with one tap. Works for notes too, like the Wi-Fi password at the door.</p>
+      <p class="lede">Instead of “the link is in the chat”, chirp it near your mic on a call or out loud in the room. Anyone wearing Chirp glasses saves it to Telegram with one tap. Notes work too, like the Wi-Fi password.</p>
       <div class="panel">
         <label for="title">Title</label>
         <input id="title" maxlength="60" placeholder="Launch thread" />
         <label for="url">Link (https, optional)</label>
-        <input id="url" placeholder="https://…" />
+        <input id="url" placeholder="https://" />
         <label for="note">Note (optional)</label>
-        <input id="note" maxlength="200" placeholder="network Studio5 · password …" />
+        <input id="note" maxlength="200" placeholder="Network Studio5, password on the fridge" />
         <div class="row">
           <div><label for="from">From (optional)</label><input id="from" maxlength="40" placeholder="your name" /></div>
           <div><label for="minutes">Valid for (minutes)</label><input id="minutes" type="number" min="1" max="120" value="10" /></div>
         </div>
-        <div class="row">
+        <div class="actions">
           <button id="chirp">Chirp it</button>
           <button class="ghost hidden" id="again">Chirp again</button>
         </div>
         <div class="status" id="status"></div>
       </div>
+      <div class="lens-frame"><div class="lens" id="lens"></div></div>
+      <p class="lens-caption">What their lens shows when they hear it</p>
+      <canvas class="wave" aria-hidden="true"></canvas>
     </main>
     <script type="module" src="/src/link.ts"></script>
   </body>

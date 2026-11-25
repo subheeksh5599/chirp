@@ -1,6 +1,6 @@
 import { $, api, playFrame, status } from './chirp';
 
-let bill: { frame: string; payId: string } | null = null;
+let bill: { frame: string; payId: string; lens: string } | null = null;
 let poll: number | undefined;
 
 const SHOP_KEY = 'chirp.shop.name';
@@ -23,7 +23,7 @@ async function check() {
       const el = $('#pay-status');
       el.replaceChildren();
       el.dataset.kind = 'ok';
-      el.append(`✓ Paid ${r.amountTon} TON · `);
+      el.append(`Paid ${r.amountTon} TON. `);
       const a = document.createElement('a');
       a.href = r.tx!;
       a.target = '_blank';
@@ -44,8 +44,8 @@ $('#chirp').addEventListener('click', async () => {
     localStorage.setItem(SHOP_KEY, shop);
     const amountTon = Number(($('#amount') as HTMLInputElement).value);
     const memo = ($('#memo') as HTMLInputElement).value.trim() || undefined;
-    bill = await api<{ frame: string; payId: string }>('/api/handoff/bill', { body: { shop, amountTon, memo } });
-    $('#bill').textContent = `${shop} · ${amountTon} TON`;
+    bill = await api<{ frame: string; payId: string; lens: string }>('/api/handoff/bill', { body: { shop, amountTon, memo } });
+    $('#lens').textContent = bill.lens;
     $('#form').classList.add('hidden');
     $('#waiting').classList.remove('hidden');
     await chirp();

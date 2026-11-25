@@ -22,7 +22,7 @@ if (!tg?.initData) {
   tg.expand();
   const u = tg.initDataUnsafe.user;
   $('#name').textContent = u ? [u.first_name, u.last_name].filter(Boolean).join(' ') : 'You';
-  $('#username').textContent = u?.username ? `@${u.username}` : 'no public username: they will still get your intro';
+  $('#username').textContent = u?.username ? `@${u.username}` : 'No public username. They will still get your intro.';
 }
 
 $('#chirp').addEventListener('click', async () => {
@@ -30,11 +30,11 @@ $('#chirp').addEventListener('click', async () => {
   btn.disabled = true;
   try {
     localStorage.setItem(ROLE_KEY, roleInput.value.trim());
-    const { frame, expiresInS } = await api<{ frame: string; expiresInS: number }>('/api/handoff/connect', {
+    const { frame, expiresInS, lens } = await api<{ frame: string; expiresInS: number; lens: string }>('/api/handoff/connect', {
       body: { initData: tg!.initData, role: roleInput.value },
     });
+    $('#lens').textContent = lens;
     status($('#status'), 'Chirping…');
-    btn.classList.add('pulse');
     await playFrame(frame, { repeat: 2 });
     tg?.HapticFeedback?.notificationOccurred('success');
     status($('#status'), `Sent. Their lens shows your card for ${expiresInS} s. Tap again if they missed it.`, 'ok');
@@ -42,7 +42,6 @@ $('#chirp').addEventListener('click', async () => {
     tg?.HapticFeedback?.notificationOccurred('error');
     status($('#status'), String((e as Error).message), 'err');
   } finally {
-    btn.classList.remove('pulse');
     btn.disabled = false;
   }
 });
