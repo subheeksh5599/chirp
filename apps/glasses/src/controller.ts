@@ -139,7 +139,8 @@ export class Controller {
       return this.d.show(`Chirp · offline\n${this.offline.length} heard, will retry\n\nswipe: back`);
     }
     const ref = res.card.ref?.id;
-    const showing = this.mode === 'card' && this.card && this.card.card.kind !== 'error';
+    // Only a card the wearer can still act on holds the lens; a finished result (info) or an error gives way.
+    const showing = this.mode === 'card' && this.card && this.card.card.kind !== 'error' && this.card.card.kind !== 'info';
     if (res.card.kind === 'error') {
       if (showing) return; // a bad chirp never covers a good card
       return this.present(res);
