@@ -117,7 +117,7 @@ async function main() {
     };
     const input = type === undefined ? undefined : map[type];
     if (input) {
-      console.log(`[chirp] input ${input}`);
+      if (import.meta.env.DEV) console.log(`[chirp] input ${input}`);
       await c.onInput(input);
     }
   });
