@@ -33,7 +33,7 @@
     <script type="module">
       fetch('/api/health').catch(() => {});
       const bot = document.getElementById('bot');
-      bot.href = 'https://t.me/Chirp567_bot';
+      fetch('/api/config').then((r) => r.json()).then((c) => { if (c.bot) bot.href = `https://t.me/${c.bot}`; }).catch(() => {});
     </script>
   </body>
 </html>
