@@ -3,26 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chirp · Sound test</title>
+    <title>Sound test: Chirp</title>
+    <meta name="description" content="Play a test chirp to check that glasses in a room can hear it." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <main>
-      <header class="top"><span class="mark">Chirp</span><a href="/">all tools</a></header>
+      <header class="top"><a class="mark" href="/">Chirp</a><a href="/">All tools</a></header>
       <h1>Sound test</h1>
       <p class="lede">Plays a fixed test frame so you can check that glasses in a room hear the chirp. The glasses show “not a Chirp code” for it, which still proves the sound arrived.</p>
       <div class="panel">
         <label for="frame">Frame (9 characters)</label>
         <input id="frame" maxlength="9" value="HTEST0000" />
         <div class="row">
-          <div><label for="volume">Volume (1–40)</label><input id="volume" type="number" min="1" max="40" value="12" /></div>
+          <div><label for="volume">Volume, 1 to 40</label><input id="volume" type="number" min="1" max="40" value="12" /></div>
           <div><label for="repeat">Copies per chirp</label><input id="repeat" type="number" min="1" max="3" value="2" /></div>
         </div>
-        <div class="row">
+        <div class="actions">
           <button id="play">Chirp once</button>
           <button class="ghost" id="loop">Chirp every 6 s</button>
         </div>
         <div class="status" id="status"></div>
+        <canvas class="wave" aria-hidden="true"></canvas>
       </div>
     </main>
     <script type="module" src="/src/test.ts"></script>

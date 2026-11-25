@@ -37,12 +37,13 @@ async function search() {
     status($('#status'), markets.length ? '' : 'No live markets for that search.');
     for (const m of markets) {
       const li = document.createElement('li');
+      li.className = 'result';
       const info = document.createElement('div');
       const title = document.createElement('div');
       title.textContent = m.question;
       const meta = document.createElement('div');
       meta.className = 'muted';
-      meta.textContent = `YES ${pct(m.yes)} · ${usd(m.volume24h)} 24h`;
+      meta.textContent = `Yes ${pct(m.yes)}, ${usd(m.volume24h)} traded in 24h`;
       const out = document.createElement('div');
       out.className = 'status out';
       info.append(title, meta, out);
@@ -51,7 +52,7 @@ async function search() {
       play.onclick = () => void mark(m, li, false);
       const dl = document.createElement('button');
       dl.className = 'ghost';
-      dl.textContent = '.wav';
+      dl.textContent = 'Download';
       dl.title = 'Download the chirp to mix into your stream';
       dl.onclick = () => void mark(m, li, true);
       li.append(info, play, dl);

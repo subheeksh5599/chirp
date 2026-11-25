@@ -3,30 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chirp · Privacy</title>
+    <title>Privacy: Chirp</title>
+    <meta name="description" content="What Chirp hears, sends and stores." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <main>
-      <header class="top"><span class="mark">Chirp</span><a href="/">home</a></header>
+      <header class="top"><a class="mark" href="/">Chirp</a><a href="/">All tools</a></header>
       <h1>Privacy</h1>
-      <div class="panel">
-        <h2 style="margin-top: 0">Microphone (glasses and phone)</h2>
+      <div class="muted">
+        <h2>Microphone (glasses and phone)</h2>
         <p>The glasses app listens for Chirp tones. Audio stays in memory on your phone, is decoded on the spot, and is dropped. Nothing is recorded, stored or uploaded. Only a decoded 9-character code is sent to our server. A long press on the glasses pauses listening. The phone microphone is used only if you switch to it.</p>
-        <h2>Network</h2>
+        <h2 class="section">Network</h2>
         <p>The app talks to one server, the Chirp API at the same domain as this page, hosted on Vercel with a Neon Postgres database.</p>
-        <h2>What we store</h2>
+        <h2 class="section">What we store</h2>
         <ul>
           <li>Your Telegram user id, name and username, once you pair, so we can send what you heard to your Telegram chat.</li>
           <li>What your glasses heard (talk titles, contact cards, bills, markets) for your <code>/heard</code> log.</li>
           <li>Room codes heard during a session, to work out presence. Presence records name you only by a one-way pseudonym.</li>
           <li>Votes, contacts you chose to connect with, paper positions, and testnet payment references.</li>
         </ul>
-        <h2>Speaker subtitles</h2>
-        <p>If a speaker turns on subtitles, 5-second clips from the speaker's own microphone are sent to a speech-to-text service (Groq) and the latest line is shown to listeners. Listener audio is never sent.</p>
-        <h2>Money</h2>
+        <h2 class="section">Speaker subtitles</h2>
+        <p>If a speaker turns on subtitles, 5-second clips from the speaker’s own microphone are sent to a speech-to-text service (Groq) and the latest line is shown to listeners. Listener audio is never sent.</p>
+        <h2 class="section">Money</h2>
         <p>Chirp holds no funds and never signs anything. Payments and anchors are TON testnet transactions you confirm in your own wallet. Paper positions are not trades.</p>
-        <h2>Contact</h2>
+        <h2 class="section">Contact</h2>
         <p>Message the bot on Telegram, or open an issue on the project repository.</p>
       </div>
     </main>
