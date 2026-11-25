@@ -12,3 +12,4 @@ runbook*.md
 # public build-time config (no secrets)
 !apps/glasses/.env.production
 *.ehpk
+!.env.example
