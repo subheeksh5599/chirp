@@ -49,6 +49,17 @@ The shipped default is **two softened copies at volume 12**: it decoded as often
 
 `npm run presence:live`, 2026-11-25: a session on production played its rotating room code from the Mac speaker every ~12 s, into the simulator running the glasses app. The glasses heard **6 of 8** room codes, enough for the session's rule (2 codes across 1 minute), and the claim produced record `27VHDCYT`. Same worst-case setup as §3 (a laptop into its own mic).
 
+### 4c. A phone as the sender
+
+2026-11-25: the sender was a phone playing `/test.html` (**Chirp once**, volume 12, two copies) into the simulator running the glasses app. Heard counts come from the server's resolve log and `scripts/count-heard.mjs`.
+
+| Distance | Heard | Presses |
+|---|---|---|
+| 30 cm | **10** | 10, counted by the person pressing |
+| 1 m | **7** | not recorded; the sender reported every press registered |
+
+Before this run the glasses app dropped the same code heard within 10 s, so pressing the same test code faster than that registered every other press. The window is now 4 s, enough to cover the two copies of one press (`apps/glasses/test/dedupe.test.ts`).
+
 ## 5. Through call and stream codecs (offline)
 
 `npm run bench:channels` (`scripts/channel-bench.mjs`, 20 random codes per row). Each code is made with the shipped sender settings (normal mode, volume 12, softened, sent twice). It goes through a real codec with ffmpeg, comes back as 16 kHz mono (what the glasses mic delivers), and is decoded the way the glasses app decodes it. "Room noise" adds white noise 10 dB below the chirp before the codec. Raw output: [`bench-channels.txt`](bench-channels.txt).
@@ -72,6 +83,6 @@ The shipped default is **two softened copies at volume 12**: it decoded as often
 
 ## 6. Not measured yet
 
-- A phone as the sender, at 1, 3 and 5 m.
+- A phone as the sender at 3 and 5 m, and a counted set at 1 m.
 - Real glasses (their microphone path may differ from the simulator's).
 - A live voice or video call, with the app's own noise suppression on.
