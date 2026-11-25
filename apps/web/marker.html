@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chirp · Stream markers</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <header class="top"><span class="mark">Chirp</span><a href="/">all tools</a></header>
+      <h1>Stream markers</h1>
+      <p class="lede">Talking about a market on your stream or podcast? Mark it here. The chirp plays through your speakers (or download it and mix it into the stream), and every viewer wearing Chirp glasses sees that exact market with live odds.</p>
+      <div class="panel">
+        <label for="q">Find a live market</label>
+        <div class="row">
+          <input id="q" placeholder="bitcoin, fed, election…" />
+          <button id="search" style="flex: 0 0 auto">Search</button>
+        </div>
+        <div class="status" id="status"></div>
+        <ul class="list" id="results"></ul>
+      </div>
+    </main>
+    <script type="module" src="/src/marker.ts"></script>
+  </body>
+</html>
