@@ -347,6 +347,11 @@ describe('router', () => {
     expect((await req('POST', '/api/heard', { frame: 'BABCDEFGH' })).status).toBe(401);
     expect((await req('POST', '/api/telegram', {}, { 'x-telegram-bot-api-secret-token': 'wrong' })).status).toBe(401);
   });
+  it('config reports the bot name read from the real Telegram token', async () => {
+    const r = await req('GET', '/api/config');
+    expect(r.status).toBe(200);
+    expect((r.body as { bot: string }).bot).toMatch(/^[A-Za-z0-9_]{5,}bot$/i);
+  });
   it('device flow over HTTP returns lens text', async () => {
     const created = await req('POST', '/api/devices');
     expect(created.status).toBe(201);

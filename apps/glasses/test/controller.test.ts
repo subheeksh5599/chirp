@@ -45,7 +45,7 @@ function rig() {
     getItem: async (k) => store.get(k) ?? '',
     setItem: async (k, v) => void store.set(k, v),
     log: () => undefined,
-    botName: 'Chirp567_bot',
+    botName: '@test_bot',
   });
   return { c, store, screens, mic, exits: () => exits, lens: () => screens.at(-1) ?? '' };
 }
@@ -82,7 +82,7 @@ describe('glasses controller', () => {
     const r = rig();
     await r.c.start();
     expect(r.c.mode).toBe('pairing');
-    expect(r.lens()).toMatch(/Open @Chirp567_bot and send\n\s+\d{6}/);
+    expect(r.lens()).toMatch(/Open @test_bot and send\n\s+\d{6}/);
     expect(r.store.get('chirp-device-token')).toMatch(/\./);
     await pair(r.c);
     expect(r.c.mode).toBe('root');
