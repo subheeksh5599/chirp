@@ -85,7 +85,33 @@ Rows only move to ✅ after a real run, with the evidence linked.
 - **Call audio:** voice calls compress sound and cut noise, which can damage tones. Calls use the most robust mode, and decode rates over real calls get measured before any claim is made.
 - **Audible:** every chirp is a short beep. It's fine in talks and streams, but the repeat rate has to stay low.
 - **Opt-in senders:** venues, speakers and streams must choose to chirp. Talks and streams are realistic now. Public spaces like stations and airports are later.
-- **Real glasses unverified:** the glasses mic path may filter tones. Simulator results do not prove real-device results.
+- **Real glasses unverified:** the glasses mic path may filter tones. Simulator results do not prove real-device results. Fallback: the SDK can also capture from the **phone's microphone** (same 16 kHz format), so a "listen with phone" setting keeps Chirp working even if the glasses mic path proves unsuitable.
+
+## Definition of done
+
+Chirp counts as finished only when every line below is true and checked on a real run. The list follows the store's published review rubric plus our own evidence rules.
+
+**Works end to end**
+- [ ] All four layers run on real accounts: broadcast (slides + poll votes), presence (claim + testnet anchor), hand-off (Telegram connect + testnet pay), sync (stream marker opens the live market)
+- [ ] Every heard item lands in Telegram and shows in `/heard`
+- [ ] Decode rates are measured and published: distance, room noise, call audio, stream audio
+- [ ] Replay, forgery and single-shared-code attacks are refused by tests
+
+**Ships like a real app**
+- [ ] `app.json` valid: lowercase reverse-domain `package_id`, name ≤ 20 characters, `x.y.z` version, `min_sdk_version` set, only permissions that are used (`network` with whitelist, `g2-microphone`, `phone-microphone` only if the fallback ships)
+- [ ] Packs into `.ehpk` with `evenhub pack app.json dist --sdk-ver <installed>`; no keys or secrets inside
+- [ ] First launch never shows a black screen: the lens explains pairing, and setup is remembered in local storage
+- [ ] Runs with the phone locked: core flow works on glasses + ring alone, still alive after 2 minutes idle
+- [ ] Root-page double-tap calls the system exit dialog (`shutDownPageContainer(1)`), and the phone-side page closes with it
+- [ ] Server sends correct CORS headers, and every domain is in the whitelist
+- [ ] Greyscale icon and screenshots taken from the simulator; privacy policy covers every permission and names the backend domain
+
+**Honest and reproducible**
+- [ ] A fresh clone runs by following Setup, with no undocumented steps
+- [ ] Tests pass in CI (`packages/wire` vectors, presence rule, server routes)
+- [ ] The status table above has no ⏳ rows that the README claims elsewhere
+- [ ] A short video in this README shows all four layers on real accounts
+- [ ] Prior work is listed: the open-source data-over-sound codec and every library used
 
 ## Repo layout (planned)
 
