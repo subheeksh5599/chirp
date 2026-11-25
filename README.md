@@ -274,7 +274,9 @@ Checked only when true on a real run.
 - [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, bills), sync (markers, paper positions) all run against production services
 - [x] Every heard item lands in Telegram and shows in `/heard`
 - [x] Replay, forgery and single-shared-code attacks are refused by tests
-- [ ] Decode rates published for a phone sender, call audio and stream audio (simulator and offline rates are published)
+- [x] Decode rates published through call, stream and podcast codecs ([measurements §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline))
+- [ ] Decode rate published for a phone sender across a room
+- [ ] Decode rate measured on a live call with the call app's noise suppression on
 - [ ] A presence record anchored and a bill paid on TON testnet with the transaction linked here
 
 **Ships like a real app**
