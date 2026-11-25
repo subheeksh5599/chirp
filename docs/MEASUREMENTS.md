@@ -45,8 +45,29 @@ The shipped default is **two softened copies at volume 12**: it decoded as often
 | A slide change reaches the lens without a new chirp | ✓ |
 | A tap on the glasses votes in the poll | ✓ (vote recorded in the database) |
 
-## 5. Not measured yet
+## 5. Through call and stream codecs (offline)
+
+`npm run bench:channels` (`scripts/channel-bench.mjs`, 20 random codes per row). Each code is made with the shipped sender settings (normal mode, volume 12, softened, sent twice). It goes through a real codec with ffmpeg, comes back as 16 kHz mono (what the glasses mic delivers), and is decoded the way the glasses app decodes it. "Room noise" adds white noise 10 dB below the chirp before the codec. Raw output: [`channel-bench.txt`](channel-bench.txt).
+
+| channel | stands for | clean | room noise 10 dB SNR |
+|---|---|---|---|
+| none (16 kHz mic only) | baseline | 20/20 | 20/20 |
+| Opus 16 kbps, voice mode | a voice call on a weak connection | 20/20 | 12/20 |
+| Opus 24 kbps, voice mode | a typical voice or video call | 20/20 | 20/20 |
+| Opus 64 kbps, music mode | a voice chat room | 20/20 | 20/20 |
+| AAC 64 kbps | a low-bitrate stream | 20/20 | 20/20 |
+| AAC 128 kbps | a normal live stream | 20/20 | 20/20 |
+| MP3 128 kbps | a podcast file | 20/20 | 20/20 |
+| G.722 (16 kHz) | an HD phone call | 20/20 | 20/20 |
+| G.711 mu-law (8 kHz) | an old phone line | 0/20 | 0/20 |
+
+- Every modern call, chat-room, stream and podcast codec carried the code 20 times out of 20 when clean.
+- The weakest call setting (Opus at 16 kbps) with a noisy room dropped to 12 of 20.
+- An old 8 kHz phone line can't carry it at all: that line stops at 4 kHz and the chirp's tones reach 6.1 kHz.
+- **Limit:** call apps also run noise suppression and echo cancellation, which can treat a chirp as noise. No file codec models that, so a live call is still unmeasured.
+
+## 6. Not measured yet
 
 - A phone as the sender, at 1, 3 and 5 m.
 - Real glasses (their microphone path may differ from the simulator's).
-- Voice-call audio (Telegram group call, video call) and stream audio after compression.
+- A live voice or video call, with the app's own noise suppression on.
