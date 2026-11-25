@@ -2,7 +2,7 @@
 import { encodeFrame, randomCode } from '../packages/wire/src/index.js';
 import { one, q } from './db.js';
 import { env, HttpError } from './env.js';
-import { Card, wrap } from './lens.js';
+import { render, type Card, wrap } from './lens.js';
 import { Device, logHeard } from './devices.js';
 import { notify } from './notify.js';
 import { displayName, esc, verifyInitData } from './telegram.js';
@@ -22,7 +22,8 @@ async function issue(kind: Handoff['kind'], ownerTgId: number | null, payload: o
     `INSERT INTO $S.handoffs (token, kind, owner_tg_id, payload, expires_at) VALUES ($1, $2, $3, $4, now() + make_interval(secs => $5))`,
     [token, kind, ownerTgId, JSON.stringify(payload), ttlS],
   );
-  return { token, frame: encodeFrame({ type: 'H', code: token }), expiresInS: ttlS };
+  const lens = render(handoffPreview({ token, kind, payload: payload as Handoff['payload'] }));
+  return { token, frame: encodeFrame({ type: 'H', code: token }), expiresInS: ttlS, lens };
 }
 
 /** A link or short note anyone can chirp: "the link is in the chat", Wi-Fi details, a menu. */
@@ -65,11 +66,11 @@ export async function liveHandoff(token: string): Promise<Handoff | null> {
   return one<Handoff>(`SELECT * FROM $S.handoffs WHERE token = $1 AND expires_at > now()`, [token]);
 }
 
-export async function handoffCard(device: Device, h: Handoff): Promise<Card> {
+/** The card a listener sees for a hand-off, before acting on it. Pure, so senders can preview it. */
+export function handoffPreview(h: Pick<Handoff, 'token' | 'kind' | 'payload'>): Card {
   const ref = { type: 'handoff' as const, id: h.token };
+  const p = h.payload;
   if (h.kind === 'connect') {
-    const p = h.payload;
-    await logHeard(device.id, 'contact', h.token, p.name, { username: p.username, role: p.role });
     return {
       kind: 'connect', ref,
       lines: [p.name, ...(p.role ? wrap(p.role, 40, 1) : []), p.username ? `@${p.username}` : 'Telegram contact'],
@@ -78,8 +79,6 @@ export async function handoffCard(device: Device, h: Handoff): Promise<Card> {
     };
   }
   if (h.kind === 'link') {
-    const p = h.payload;
-    await logHeard(device.id, 'link', h.token, p.title, { url: p.url, note: p.note, from: p.from });
     return {
       kind: 'link', ref,
       lines: [...wrap(p.title, 40, 2), ...(p.note ? wrap(p.note, 40, 2) : []), ...(p.from ? [`from ${p.from}`] : [])],
@@ -87,14 +86,20 @@ export async function handoffCard(device: Device, h: Handoff): Promise<Card> {
       double: 'ignore',
     };
   }
-  const p = h.payload;
-  await logHeard(device.id, 'bill', h.token, p.shop, { amountNano: p.amountNano, memo: p.memo });
   return {
     kind: 'pay', ref,
     lines: [p.shop, `${nanoToTon(p.amountNano)} TON · testnet`, ...(p.memo ? wrap(p.memo, 40, 1) : [])],
     tap: 'pay on phone',
     double: 'ignore',
   };
+}
+
+export async function handoffCard(device: Device, h: Handoff): Promise<Card> {
+  const p = h.payload;
+  if (h.kind === 'connect') await logHeard(device.id, 'contact', h.token, p.name, { username: p.username, role: p.role });
+  else if (h.kind === 'link') await logHeard(device.id, 'link', h.token, p.title, { url: p.url, note: p.note, from: p.from });
+  else await logHeard(device.id, 'bill', h.token, p.shop, { amountNano: p.amountNano, memo: p.memo });
+  return handoffPreview(h);
 }
 
 export async function connect(device: Device & { tg_user_id: string }, h: Handoff) {
