@@ -25,5 +25,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      - name: Glasses build calls only whitelisted origins
+        run: node scripts/check-network-whitelist.mjs
       - name: Tests (server tests use a throwaway schema in the real database)
         run: npm test
