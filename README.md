@@ -20,7 +20,7 @@ Display glasses can show you things and hear you, but they can't see. No camera,
 
 Chirp targets **Even Realities G2** glasses. Their apps are web pages that run inside the Even Hub app on the paired phone; `.ehpk` is that platform's app package.
 
-> **Verified so far:** everything runs against production services, and the glasses app runs in the official Even Hub simulator, which hears the room through the laptop mic. A phone chirping a shared link into the simulator opened the link card (simulator log: `heard HJ6YH7G4Y`, `card link Test link`). Not tested yet: real G2 glasses, a phone sender measured over many trials, a live stream. The [status table](#whats-real-the-status-table) says which line is which.
+> **Verified so far:** everything runs against production services, and the glasses app runs in the official Even Hub simulator, which hears the room through the laptop mic. A phone chirping a shared link into the simulator opened the link card (simulator log: `heard HJ6YH7G4Y`, `card link Test link`). A phone as the sender: 10 of 10 at 30 cm. Not tested yet: real G2 glasses, a phone at 3–5 m, a live stream. The [status table](#whats-real-the-status-table) says which line is which.
 
 ```
 SOUND CARRIES A CODE  ≠  THE CODE CARRIES CONTENT  ≠  HEARING ONCE PROVES YOU WERE THERE
@@ -285,7 +285,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Packs to `.ehpk` | ✅ | `npm run pack -w @chirp/glasses` |
 | Real glasses microphone | ⏳ not tested | no device; phone-mic fallback built (swipe on the root screen) |
 | Through call, stream and podcast codecs | ✅ 20/20 clean on every modern codec; 12/20 on 16 kbps Opus with room noise; 0/20 on an 8 kHz phone line | `npm run bench:channels`, [MEASUREMENTS §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline) |
-| Phone as sender across a room | ⏳ not measured | `scripts/count-heard.mjs` counts each trial |
+| Phone as sender | ✅ 10 of 10 at 30 cm; 7 heard at 1 m (presses not counted) · ⏳ 3–5 m | [MEASUREMENTS §4c](docs/MEASUREMENTS.md#4c-a-phone-as-the-sender) |
 | Live call with the app's noise suppression | ⏳ not measured | needs two accounts on a call |
 | Store icon (24×24, store pixel rules) | ✅ | `scripts/test/icon.test.ts` |
 | Glasses reach only whitelisted origins | ✅ checked in CI | `scripts/test/whitelist.test.ts`, `npm run check:whitelist` |
@@ -301,7 +301,7 @@ Checked only when true on a real run.
 - [x] Every heard item lands in Telegram and shows in `/heard`
 - [x] Replay, forgery and single-shared-code attacks are refused by tests
 - [x] Decode rates published through call, stream and podcast codecs ([measurements §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline))
-- [ ] Decode rate published for a phone sender across a room
+- [x] Decode rate published for a phone sender at 30 cm and 1 m ([measurements §4c](docs/MEASUREMENTS.md#4c-a-phone-as-the-sender)); 3–5 m still open
 - [ ] Decode rate measured on a live call with the call app's noise suppression on
 - [x] A bill paid on TON testnet ([bill `DTJ5NFAM`](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028)) and a presence record anchored ([record `27VHDCYT`](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b), [verify it](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT))
 
