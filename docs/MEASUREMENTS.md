@@ -47,7 +47,7 @@ The shipped default is **two softened copies at volume 12**: it decoded as often
 
 ## 5. Through call and stream codecs (offline)
 
-`npm run bench:channels` (`scripts/channel-bench.mjs`, 20 random codes per row). Each code is made with the shipped sender settings (normal mode, volume 12, softened, sent twice). It goes through a real codec with ffmpeg, comes back as 16 kHz mono (what the glasses mic delivers), and is decoded the way the glasses app decodes it. "Room noise" adds white noise 10 dB below the chirp before the codec. Raw output: [`channel-bench.txt`](channel-bench.txt).
+`npm run bench:channels` (`scripts/channel-bench.mjs`, 20 random codes per row). Each code is made with the shipped sender settings (normal mode, volume 12, softened, sent twice). It goes through a real codec with ffmpeg, comes back as 16 kHz mono (what the glasses mic delivers), and is decoded the way the glasses app decodes it. "Room noise" adds white noise 10 dB below the chirp before the codec. Raw output: [`bench-channels.txt`](bench-channels.txt).
 
 | channel | stands for | clean | room noise 10 dB SNR |
 |---|---|---|---|
