@@ -7,7 +7,7 @@ import { setSender, type Outgoing } from '../notify.js';
 import { createDevice, deviceFromAuth, type Device } from '../devices.js';
 import { act, heard, sessionState } from '../app.js';
 import { createSession, currentFrame, endSession, getSession, setSlide, tally, adminSession } from '../sessions.js';
-import { checkPayment, issueBill, issueConnect } from '../handoff.js';
+import { checkPayment, issueBill, issueConnect, issueLink } from '../handoff.js';
 import { createMarker, paperPositions } from '../markers.js';
 import { searchMarkets } from '../polymarket.js';
 import { handleUpdate } from '../bot.js';
@@ -257,6 +257,35 @@ describe('hand-off: bills (testnet)', () => {
     expect(u.searchParams.get('text')).toBe(`chirp:pay:${bill.payId}`);
     // Real testnet lookup: nobody has paid this fresh bill.
     expect(await checkPayment(bill.payId)).toMatchObject({ paid: false, amountTon: 0.25, shop: 'Café Noor' });
+  });
+});
+
+describe('hand-off: links and notes', () => {
+  it('validates input', async () => {
+    await expect(issueLink({ title: '' })).rejects.toMatchObject({ status: 400 });
+    await expect(issueLink({ title: 'x' })).rejects.toMatchObject({ status: 400 });
+    await expect(issueLink({ title: 'x', url: 'http://plain' })).rejects.toMatchObject({ status: 400 });
+    await expect(issueLink({ title: 'x', note: 'n', minutes: 500 })).rejects.toMatchObject({ status: 400 });
+  });
+  it('a host shares a link in a voice chat; tap saves it to Telegram and /heard', async () => {
+    const { device, tgId } = await pairedDevice();
+    const l = await issueLink({ title: 'Launch thread', url: 'https://example.com/launch', from: 'Host', minutes: 15 });
+    expect(l.expiresInS).toBe(900);
+    const c = await heard(device, l.frame);
+    expect(c).toMatchObject({ kind: 'link', tap: 'save to Telegram' });
+    expect(c.lines).toEqual(['Launch thread', 'from Host']);
+    const done = await act(device, c.ref, 'tap');
+    expect(done.lines[0]).toBe('✓ Saved to Telegram');
+    const m = sentTo(tgId)[0];
+    expect(m.text).toContain('https://example.com/launch');
+    expect(m.buttons?.[0][0]).toMatchObject({ text: 'Open link', url: 'https://example.com/launch' });
+    await handleUpdate({ message: { chat: { id: tgId, type: 'private' }, from: { id: tgId, first_name: 'T' }, text: '/heard' } });
+    expect(sentTo(tgId).at(-1)!.text).toMatch(/🔗 Launch thread/);
+  });
+  it('a note without a link works too (Wi-Fi at the door)', async () => {
+    const { device } = await pairedDevice();
+    const l = await issueLink({ title: 'Office Wi-Fi', note: 'network Studio5 · password tidepool-24' });
+    expect((await heard(device, l.frame)).lines).toEqual(['Office Wi-Fi', 'network Studio5 · password tidepool-24']);
   });
 });
 
