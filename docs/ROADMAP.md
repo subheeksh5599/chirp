@@ -4,7 +4,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 0: prove the sound path
 
-**Status: partly done.** Codec table and air test in [MEASUREMENTS](MEASUREMENTS.md) §1–§4; `scripts/e2e-room.ts` plays room codes from the Mac speaker into the simulator. The air test was a laptop into its own mic, not across a room; distances of 1, 3 and 5 m with a phone sender are not measured yet.
+**Status: partly done.** Codec table and air test in [MEASUREMENTS](MEASUREMENTS.md) §1–§4; `scripts/e2e-room.ts` plays room codes from the Mac speaker into the simulator. The air test was a laptop into its own mic, not across a room; a phone sender was measured at 30 cm (10/10) and 1 m (7 heard); 3 and 5 m are not measured yet.
 
 - Glasses app skeleton in the simulator: mic on, PCM in, decoded text on the lens.
 - Test sender page that chirps a fixed string.
@@ -73,7 +73,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 7: ship
 
-**Status: partly done.** The `.ehpk` packs, the store icon is generated and tested, CI checks the network whitelist. Still open: the demo video and a check on real glasses.
+**Status: partly done.** The `.ehpk` packs, the store icon is generated and tested, CI checks the network whitelist. The [demo video](https://youtu.be/qwdeAFHoWMI) is in the README. Still open: a check on real glasses.
 
 - Packaged glasses build.
 - README with setup, measured numbers, and a short video in the README showing broadcast, presence, hand-off and sync on real accounts.
