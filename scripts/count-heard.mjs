@@ -1,6 +1,6 @@
 // Counts what the simulator's glasses app heard during one phone trial, for MEASUREMENTS.md.
 // Start it, then press "Chirp once" on the phone N times, about 12 s apart. Each press plays two
-// copies and the decoder drops repeats within 10 s, so one press counts at most once.
+// copies and the decoder drops repeats within 10 s, so one press counts at most once. It listens for 15 s per press, so a slow hand is not cut off.
 //
 //   node scripts/count-heard.mjs <presses> [label]      e.g. node scripts/count-heard.mjs 10 "phone, 30 cm"
 // Needs the simulator running with --automation-port 9898 and the app paired.
@@ -14,21 +14,18 @@ if (!Number.isInteger(presses) || presses < 1) {
 
 const entries = async (since) => (await (await fetch(`${SIM}/api/console?since_id=${since}`)).json()).entries ?? [];
 const start = (await entries(0)).reduce((m, e) => Math.max(m, e.id), -1) + 1;
-const IDLE_MS = 20_000;
 
-console.log(`${label}: press "Chirp once" ${presses} times, about 12 s apart (the same code within 10 s counts once). Stops ${IDLE_MS / 1000} s after the last press is heard or after ${presses * 15} s.`);
+console.log(`${label}: press "Chirp once" ${presses} times, about 12 s apart (the same code within 10 s counts once). Listens for ${presses * 15} s.`);
 const heard = [];
-let last = Date.now();
 const deadline = Date.now() + presses * 15_000;
 let since = start;
-while (Date.now() < deadline && heard.length < presses && Date.now() - last < (heard.length ? IDLE_MS : presses * 15_000)) {
+while (Date.now() < deadline && heard.length < presses) {
   await new Promise((r) => setTimeout(r, 1000));
   for (const e of await entries(since)) {
     since = Math.max(since, e.id + 1);
     const m = /\[chirp\] heard (\S+)/.exec(e.message);
     if (m) {
       heard.push(m[1]);
-      last = Date.now();
       console.log(`  heard ${heard.length}: ${m[1]}`);
     }
   }
