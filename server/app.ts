@@ -1,5 +1,6 @@
 // The two calls the glasses make: "I heard this" and "the wearer tapped".
 import { parseFrame } from '../packages/wire/src/index.js';
+import { q, one } from './db.js';
 import { HttpError } from './env.js';
 import { Card, Ref, errorCard, infoCard } from './lens.js';
 import { Device, requirePaired } from './devices.js';
@@ -16,25 +17,41 @@ import {
 import { connect, handoffCard, liveHandoff, saveLink, sendPayLink } from './handoff.js';
 import { liveMarker, markerCard, paperYes, saveMarket } from './markers.js';
 
+/** Resolves a device may ask for per minute. A talk chirps every 20 s and a hand-off twice, so 30 is generous. */
+export const RESOLVES_PER_MINUTE = 30;
+
+export type Outcome = 'ok' | 'not-a-code' | 'room-code-rejected' | 'card-expired' | 'marker-expired';
+
 export async function heard(device: Device, text: unknown, nowMs = Date.now()): Promise<Card> {
   if (!device.tg_user_id) return errorCard('Not paired yet', 'open the Chirp bot in Telegram', 'and send your pairing code');
   if (typeof text !== 'string') throw new HttpError(400, 'frame text is required');
+  const recent = await one<{ n: number }>(
+    `SELECT count(*)::int AS n FROM $S.resolves WHERE device_id = $1 AND at > now() - interval '1 minute'`,
+    [device.id],
+  );
+  if ((recent?.n ?? 0) >= RESOLVES_PER_MINUTE) throw new HttpError(429, 'too many chirps from this device; wait a minute');
+  const [card, outcome] = await resolve(device, text, nowMs);
+  await q(`INSERT INTO $S.resolves (device_id, frame, outcome) VALUES ($1, $2, $3)`, [device.id, text.slice(0, 32), outcome]);
+  return card;
+}
+
+async function resolve(device: Device, text: string, nowMs: number): Promise<[Card, Outcome]> {
   const f = parseFrame(text);
-  if (!f) return errorCard('Heard a chirp', 'but it is not a Chirp code');
+  if (!f) return [errorCard('Heard a chirp', 'but it is not a Chirp code'), 'not-a-code'];
   if (f.type === 'B') {
     const hit = await matchBroadcast(f.code, nowMs);
-    if (!hit) return errorCard('Room code expired', 'wait for the next chirp');
+    if (!hit) return [errorCard('Room code expired', 'wait for the next chirp'), 'room-code-rejected'];
     await recordHearing(device, hit.session, hit.slot);
-    return sessionCard(device, hit.session);
+    return [await sessionCard(device, hit.session), 'ok'];
   }
   if (f.type === 'H') {
     const h = await liveHandoff(f.code);
-    if (!h) return errorCard('Card expired', 'ask them to chirp again');
-    return handoffCard(device, h);
+    if (!h) return [errorCard('Card expired', 'ask them to chirp again'), 'card-expired'];
+    return [await handoffCard(device, h), 'ok'];
   }
   const m = await liveMarker(f.code);
-  if (!m) return errorCard('Marker expired');
-  return markerCard(device, m.token, m.market_id);
+  if (!m) return [errorCard('Marker expired'), 'marker-expired'];
+  return [await markerCard(device, m.token, m.market_id), 'ok'];
 }
 
 /** Polling while a session card is on the lens: slide changes, polls, subtitles, the end. */
