@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
 
-**[ Try it ↓ ](#try-it-in-five-minutes)** · **[ See it in one command ↓ ](#-see-it-in-one-command)** · **[ Measurements ↓ ](#what-the-sound-measurements-say)** · **[ Status table ↓ ](#whats-real-the-status-table)** · **[ Architecture ↓ ](#architecture)**
+**[ For judges ↓ ](#for-judges-and-reviewers)** · **[ See it in one command ↓ ](#-see-it-in-one-command)** · **[ Measurements ↓ ](#what-the-sound-measurements-say)** · **[ Status table ↓ ](#whats-real-the-status-table)** · **[ Architecture ↓ ](#architecture)**
 
 </div>
 
@@ -63,7 +63,7 @@ Each sender page shows the lens text the server will send, rendered by the same 
 
 - [Live status](#live-status)
 - [The 20-second pitch](#the-20-second-pitch)
-- [Try it in five minutes](#try-it-in-five-minutes)
+- [For judges and reviewers](#for-judges-and-reviewers)
 - [See it in one command](#-see-it-in-one-command)
 - [What Chirp is NOT](#what-chirp-is-not)
 - [The problem](#the-problem)
@@ -87,21 +87,37 @@ Each sender page shows the lens text the server will send, rendered by the same 
 - [Built on](#built-on)
 - [License](#license)
 
-## Try it in five minutes
+## For judges and reviewers
 
-**On the glasses (or the simulator):**
-1. Install the build (`npm run pack -w @chirp/glasses` makes `chirp.ehpk`), or run it in the simulator with `npm run dev:glasses` and `evenhub-simulator http://localhost:5173`.
-2. The lens shows **Chirp · pair your Telegram** and a 6-digit code. Send that code to [@Chirp567_bot](https://t.me/Chirp567_bot).
-3. The lens switches to **Chirp · listening (glasses mic)**.
+No G2 glasses needed, and no clone. Everything below runs against the live deployment.
 
-**Make something chirp near it:**
+**Two minutes, nothing to install: check the real runs**
+
+| What | Open | You should see |
+|---|---|---|
+| A presence record, earned through the air and anchored on TON testnet | [`/api/presence/27VHDCYT`](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT) | `"signatureValid": true`, 6 room codes, and an `anchor` with its explorer link |
+| The anchor transaction | [testnet explorer](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b) | 0.01 TON with the comment `chirp:presence:27VHDCYT` |
+| A paid counter bill | [testnet explorer](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028) | 0.05 TON with the comment `chirp:pay:DTJ5NFAM` |
+| The sender tools | [chirp-liart-six-38.vercel.app](https://chirp-liart-six-38.vercel.app) | Start a session in the speaker console; the lens box shows exactly what every wearer would see |
+
+**Five minutes: be the wearer, in the official simulator**
+
+1. Install the simulator: `npm i -g @evenrealities/evenhub-simulator`
+2. Open the hosted glasses app in it: `evenhub-simulator https://chirp-liart-six-38.vercel.app/glasses/`
+3. The lens shows **Chirp · pair your Telegram** and a 6-digit code. Send that code to [@Chirp567_bot](https://t.me/Chirp567_bot) from your Telegram. The lens switches to **Chirp · listening (glasses mic)**.
+4. On your phone, open [Share a link](https://chirp-liart-six-38.vercel.app/link.html), type a title, and press **Chirp it** about 30 cm from your laptop. The simulator hears it through the laptop mic and shows the card.
+5. Click the lens once (a tap). The link arrives in your Telegram chat with the bot. Send `/heard` to see the list.
+
+The simulator listens through your laptop's microphone. A quiet room and the phone at half volume work best; if a chirp is missed, press **Chirp again**. The simulator's touchpad controls stand in for the glasses: Click is a tap, Double Click a double-tap, and Up or Down a swipe.
+
+**Then try the other flows from the same phone:**
 - **A talk:** open the [speaker console](https://chirp-liart-six-38.vercel.app/console.html), paste a few slides (`Poll: Ship weekly? | weekly | monthly` makes a poll), press **Start session**, then **Start chirping**. The lens shows the slide. Press **Next** and the lens follows. On a poll, tap the glasses to vote and watch the console count it. Press **End session and open claims**, and listeners who stayed long enough see **You were here** and tap to claim.
 - **A link on a call:** open [Share a link](https://chirp-liart-six-38.vercel.app/link.html), fill in a title and link, press **Chirp it** near the mic. Tap on the glasses and the link arrives in Telegram.
-- **Your card:** in the bot, tap the **Chirp me** menu button and press **Chirp my card**. The other person's lens shows your name; their tap sends both of you a message.
+- **Your card:** needs a second Telegram account. From that account, tap the bot's **Chirp me** menu button and press **Chirp my card**. The wearer's lens shows the name; their tap sends both accounts a message.
 - **A bill:** open [Counter bill](https://chirp-liart-six-38.vercel.app/shop.html), enter an amount in testnet TON, press **Create bill and chirp**. The wearer taps, confirms in a TON testnet wallet on their phone (Tonkeeper, MyTonWallet), and the counter page shows **Paid** and the explorer link.
 - **A stream marker:** open [Stream markers](https://chirp-liart-six-38.vercel.app/marker.html), search `bitcoin`, press **Chirp** (or **Download** to mix it into a stream). The lens shows the market with live odds.
 
-Then send `/heard` to the bot.
+To run every part locally instead, see [Run it yourself](#run-it-yourself).
 
 ## ▶ See it in one command
 
