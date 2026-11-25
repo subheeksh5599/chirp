@@ -18,19 +18,25 @@
 
 Display glasses can show you things and hear you, but they can't see. No camera, no NFC, and apps get no Bluetooth scanning, so every "scan this", "the link is in the chat" and "what's your Telegram?" still needs the phone to come out. **Chirp makes the microphone the glasses' way to receive from the world.** A phone, a laptop, a PA system or a stream plays a short, soft chirp that carries a 9-character code. The glasses hear it, the server turns the code into a card, and the lens shows it. One tap acts on it, and the result lands in Telegram.
 
+Chirp targets **Even Realities G2** glasses. Their apps are web pages that run inside the Even Hub app on the paired phone; `.ehpk` is that platform's app package.
+
+> **Verified so far:** everything runs against production services, and the glasses app runs in the official Even Hub simulator, which hears the room through the laptop mic. A phone chirping a shared link into the simulator opened the link card (simulator log: `heard HJ6YH7G4Y`, `card link Test link`). Not tested yet: real G2 glasses, a phone sender measured over many trials, a live stream. The [status table](#whats-real-the-status-table) says which line is which.
+
 ```
 SOUND CARRIES A CODE  ≠  THE CODE CARRIES CONTENT  ≠  HEARING ONCE PROVES YOU WERE THERE
 ```
 
-The sound only carries a short code. The content lives on the server. And presence is a rule over many rotating codes, not one: a code someone screenshots into a group chat never qualifies.
+The sound only carries a short code. The content lives on the server. And presence is a rule over many rotating codes, not one. By default it takes at least **3 different room codes heard across at least 10 minutes** (the speaker can change both), so a single code recorded and posted to a group chat never qualifies.
+
+A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second window; a room's code changes every slot. The sound codec is [ggwave](https://github.com/ggerganov/ggwave).
 
 ## Live status
 
 | Surface | Status | The evidence |
 |---|---|---|
 | API | ✅ live | `GET /api/health` on [chirp-liart-six-38.vercel.app](https://chirp-liart-six-38.vercel.app/api/health), output [below](#-see-it-in-one-command) |
-| Sender tools (console, link, bill, markers, Mini App) | ✅ live | [chirp-liart-six-38.vercel.app](https://chirp-liart-six-38.vercel.app), exercised in a browser against production |
-| Telegram bot | ✅ webhook set | [@Chirp567_bot](https://t.me/Chirp567_bot), `npm run setup` prints the webhook URL |
+| Sender tools (console, link, bill, markers, Mini App) | ✅ live | [chirp-liart-six-38.vercel.app](https://chirp-liart-six-38.vercel.app); the console and link screenshots above are from production |
+| Telegram bot | ✅ webhook set | message [@Chirp567_bot](https://t.me/Chirp567_bot); `GET /api/config` returns its name from its own token |
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator, Mac speaker → Mac mic | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
@@ -42,7 +48,7 @@ Everyone building for glasses builds a feed: your messages, your prices, your in
 
 - **Hand-off.** Someone's phone chirps their card, and one tap connects you on Telegram. A host chirps a link on a voice call. A counter chirps a bill.
 - **Broadcast.** A speaker's laptop chirps every 20 seconds. Every lens in the room follows the current slide, votes in live polls with a tap, and reads live subtitles.
-- **Presence.** The room's code changes every 5 seconds. Hearing enough of them, spread over enough time, earns a signed presence record you can anchor on TON testnet.
+- **Presence.** The room's code changes every 5 seconds. Hearing at least 3 of them across 10 minutes (the defaults) earns a signed presence record you can anchor on TON testnet.
 - **Sync.** A stream host marks the market they're talking about. Viewers' lenses show it with live odds, and a double-tap opens a paper position.
 
 Every one of those ends in your Telegram chat with the bot, and `/heard` keeps the day's list.
@@ -92,7 +98,7 @@ Each sender page shows the lens text the server will send, rendered by the same 
 - **A talk:** open the [speaker console](https://chirp-liart-six-38.vercel.app/console.html), paste a few slides (`Poll: Ship weekly? | weekly | monthly` makes a poll), press **Start session**, then **Start chirping**. The lens shows the slide. Press **Next** and the lens follows. On a poll, tap the glasses to vote and watch the console count it. Press **End session and open claims**, and listeners who stayed long enough see **✓ You were here** and tap to claim.
 - **A link on a call:** open [Share a link](https://chirp-liart-six-38.vercel.app/link.html), fill in a title and link, press **Chirp it** near the mic. Tap on the glasses and the link arrives in Telegram.
 - **Your card:** in the bot, tap the **Chirp me** menu button and press **Chirp my card**. The other person's lens shows your name; their tap sends both of you a message.
-- **A bill:** open [Counter bill](https://chirp-liart-six-38.vercel.app/shop.html), enter an amount in testnet TON, press **Create bill and chirp**. The wearer taps, confirms in Tonkeeper on their phone, and the counter page shows **Paid** and the explorer link.
+- **A bill:** open [Counter bill](https://chirp-liart-six-38.vercel.app/shop.html), enter an amount in testnet TON, press **Create bill and chirp**. The wearer taps, confirms in a TON testnet wallet on their phone (Tonkeeper, MyTonWallet), and the counter page shows **Paid** and the explorer link.
 - **A stream marker:** open [Stream markers](https://chirp-liart-six-38.vercel.app/marker.html), search `bitcoin`, press **Chirp** (or **Download** to mix it into a stream). The lens shows the market with live odds.
 
 Then send `/heard` to the bot.
@@ -203,8 +209,8 @@ Design rules that make it a habit rather than a demo:
 ## The chirp, step by step
 
 1. **Frame.** 9 ASCII characters: a type (`B` broadcast, `H` hand-off, `S` stream marker) and an 8-character Crockford base32 code (40 bits). The codec adds its own Reed-Solomon error correction. Details: [docs/PROTOCOL.md](docs/PROTOCOL.md).
-2. **Sound.** The codec's audible-normal mode, softened: 25 ms fades so there are no clicks, a 6.8 kHz low-pass, and two copies 250 ms apart so either one arriving is enough. Volume 12 of 100.
-3. **Hearing.** The glasses app feeds 100 ms PCM chunks to the decoder and ignores the same text within 10 seconds.
+2. **Sound.** The codec's audible-normal mode, softened: 25 ms fades so there are no clicks, a 6.8 kHz low-pass, and two copies 250 ms apart so either one arriving is enough. Volume 12 (the sender pages allow 1 to 40).
+3. **Hearing.** The glasses app feeds each mic audio event (about 100 ms of 16 kHz PCM) to the decoder and ignores the same text within 10 seconds.
 4. **Resolving.** The server matches broadcast codes against every live session's key for the current slot and its neighbours; hand-off and marker codes are looked up and must not be expired.
 5. **Card.** The server writes the words, wrapped to 40 columns, with a hint line (`tap: … · 2×tap: … · swipe: back`). The glasses only lay it out.
 6. **Act.** A tap votes, connects, saves or claims; the bot delivers the result to Telegram.
@@ -229,10 +235,10 @@ Design rules that make it a habit rather than a demo:
 
 Full tables and how to reproduce them: [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md).
 
-- **Offline, through a simulated 16 kHz mic path:** audible-normal decodes **100% down to 5 dB SNR and 95% at 0 dB**. The faster modes fail outright.
+- **Offline, through a simulated 16 kHz mic path:** audible-normal decodes **100% down to 5 dB SNR and 95% at 0 dB**. Audible-fast holds up but drops to 80% at 0 dB; audible-fastest and every dual-tone mode decode 0%.
 - **Band:** all of the chirp's energy sits between **1,875 and 6,094 Hz**.
 - **Through codecs (offline, 20 codes each):** Opus voice at 24 kbps, AAC, MP3 and G.722 all carried **20/20**. Opus at 16 kbps with room noise carried **12/20**. An 8 kHz phone line carried **0/20**, because it stops at 4 kHz.
-- **Through the air, worst case (laptop speaker into its own mic):** one copy decoded **60%** of the time; **two copies in one chirp, 80–90%**. A capture showed the laptop suppressing its own output as echo (chirps arrive with 22–26 dB SNR but cut short), which is why the sender should be a different device. Pauses between chirps made no difference.
+- **Through the air, worst case (laptop speaker into its own mic):** one copy decoded **60%** of the time. Two unsoftened copies at volume 20 decoded **18 of 20**; the shipped setting (two softened copies, volume 12) decoded **8 of 10**. A capture showed the laptop suppressing its own output as echo (chirps arrive with 22–26 dB SNR but cut short), which is why the sender should be a different device. Pauses between chirps made no difference.
 
 ## On the lens
 
@@ -254,8 +260,8 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 
 ## Engineering decisions and the traps that taught me something
 
-- **The fast codec modes don't survive 16 kHz.** The two quickest modes decode 0% after downsampling, even with no noise. The bench picked audible-normal before any UI existed.
-- **Louder was not better.** Volume 40 decoded no more often than 12 through the air, and the quieter one is far less annoying for people nearby. Two copies per chirp beat any volume change.
+- **The fastest codec modes don't survive 16 kHz.** Audible-fastest and the dual-tone modes decode 0% after downsampling, even with no noise; audible-fast is weaker at low SNR. The bench picked audible-normal before any UI existed.
+- **Louder was not better.** With two softened copies, volume 20 and volume 12 both decoded 8 of 10 through the air, and 12 is about 4 dB quieter. Two copies per chirp helped more than any volume change.
 - **A laptop can't test itself fairly.** Its echo suppression cuts the chirp short. The capture analyser (`scripts/analyze-capture.mjs`) proved it was the audio path, not the decoder.
 - **A single press arrives without a type.** The SDK normalises the press event's type `0` to undefined and sends it as a system event, so the first tap test failed until the router treated "system event with a source and no type" as a press.
 - **Repeated room codes keep counting while the lens shows something else.** The glasses report every chirp, even when the card is queued or the room was swiped away, because presence is the sum of hearings over time.
@@ -283,7 +289,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Live call with the app's noise suppression | ⏳ not measured | needs two accounts on a call |
 | Store icon (24×24, store pixel rules) | ✅ | `scripts/test/icon.test.ts` |
 | Glasses reach only whitelisted origins | ✅ checked in CI | `scripts/test/whitelist.test.ts`, `npm run check:whitelist` |
-| Spam chirps rate-limited, rejected codes logged | ✅ | `a device spamming chirps is slowed down; other devices are not` |
+| Spam chirps rate-limited, rejected codes logged | ✅ | `a device spamming chirps is slowed down; other devices are not`, `logs each rejected code with why it was refused` |
 | Locked-phone behaviour | ⏳ needs a beta install on a device | |
 
 ## Definition of done
@@ -291,7 +297,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 Checked only when true on a real run.
 
 **Works end to end**
-- [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, bills), sync (markers, paper positions) all run against production services
+- [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, issuing bills), sync (markers, paper positions) all run against production services
 - [x] Every heard item lands in Telegram and shows in `/heard`
 - [x] Replay, forgery and single-shared-code attacks are refused by tests
 - [x] Decode rates published through call, stream and podcast codecs ([measurements §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline))
@@ -360,6 +366,20 @@ docs/                plan, roadmap, protocol, measurements
 ```
 
 ## Run it yourself
+
+**You need:** Node 24, a Postgres database (a free Neon project works), a Telegram bot token from @BotFather, a public HTTPS URL for the bot webhook (your deployment, or a tunnel to `:8787`), the Even Hub tools (`npm i -g @evenrealities/evenhub-cli @evenrealities/evenhub-simulator`), and ffmpeg for `bench:channels` only.
+
+| Variable | Needed for |
+|---|---|
+| `DATABASE_URL` | everything, including tests (they use a throwaway schema) |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `PUBLIC_URL` | pairing and every Telegram message |
+| `PRESENCE_SIGNING_KEY` | signing presence records |
+| `TON_WALLET_ADDRESS` | bills and anchors (testnet) |
+| `GROQ_API_KEY` | live subtitles only |
+| `TONCENTER_API_KEY` | optional, raises toncenter's rate limit |
+| `TON_PAYER_MNEMONIC` | optional, written by `npm run payer -- new` for scripted testnet runs |
+
+`npm run dev:glasses` proxies `/api` to the local API on `:8787`, so pairing works against your own bot. To pair with the production bot instead, run it with `VITE_API_BASE=https://chirp-liart-six-38.vercel.app`.
 
 ```bash
 npm ci
