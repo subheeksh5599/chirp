@@ -2,7 +2,7 @@
 export type Ref = { type: 'session' | 'presence' | 'handoff' | 'marker'; id: string };
 
 export type Card = {
-  kind: 'slide' | 'poll' | 'presence' | 'connect' | 'pay' | 'market' | 'info' | 'error';
+  kind: 'slide' | 'poll' | 'presence' | 'connect' | 'pay' | 'link' | 'market' | 'info' | 'error';
   ref?: Ref;
   lines: string[];
   /** Label for one tap; absent means tap does nothing on this card. */

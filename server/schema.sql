@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS $S.presence (
 
 CREATE TABLE IF NOT EXISTS $S.handoffs (
   token text PRIMARY KEY,
-  kind text NOT NULL CHECK (kind IN ('connect', 'pay')),
+  kind text NOT NULL,
   owner_tg_id bigint,
   payload jsonb NOT NULL,
   expires_at timestamptz NOT NULL,
@@ -120,3 +120,7 @@ CREATE TABLE IF NOT EXISTS $S.paper (
 
 CREATE INDEX IF NOT EXISTS heard_log_device_time ON $S.heard_log (device_id, heard_at DESC);
 CREATE INDEX IF NOT EXISTS sessions_active ON $S.sessions (created_at) WHERE ended_at IS NULL;
+
+-- v2: shared links / notes as a hand-off kind
+ALTER TABLE $S.handoffs DROP CONSTRAINT IF EXISTS handoffs_kind_check;
+ALTER TABLE $S.handoffs ADD CONSTRAINT handoffs_kind_check CHECK (kind IN ('connect', 'pay', 'link'));

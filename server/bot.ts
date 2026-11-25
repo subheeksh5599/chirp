@@ -38,7 +38,7 @@ async function heardToday(userId: number) {
     [devices.map((d) => d.id)],
   );
   if (!rows.length) return 'Nothing heard in the last 24 hours.';
-  const icon: Record<string, string> = { talk: '🎤', contact: '👋', bill: '🧾', market: '📈' };
+  const icon: Record<string, string> = { talk: '🎤', contact: '👋', bill: '🧾', market: '📈', link: '🔗' };
   return ['<b>Heard in the last 24 hours</b>', ...rows.map((r) => `${time(r.heard_at)} ${icon[r.kind] ?? '•'} ${esc(r.title)}`)].join('\n');
 }
 

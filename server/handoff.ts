@@ -12,16 +12,31 @@ const HANDOFF_TTL_S = 60;
 const MAX_PAY_TON = 5;
 
 type ConnectPayload = { name: string; username?: string; role?: string };
+type LinkPayload = { title: string; url?: string; note?: string; from?: string };
 type PayPayload = { shop: string; amountNano: string; memo?: string };
-type Handoff = { token: string; kind: 'connect' | 'pay'; owner_tg_id: string | null; payload: ConnectPayload & PayPayload; expires_at: string };
+type Handoff = { token: string; kind: 'connect' | 'pay' | 'link'; owner_tg_id: string | null; payload: ConnectPayload & PayPayload & LinkPayload; expires_at: string };
 
-async function issue(kind: 'connect' | 'pay', ownerTgId: number | null, payload: object) {
+async function issue(kind: Handoff['kind'], ownerTgId: number | null, payload: object, ttlS = HANDOFF_TTL_S) {
   const token = randomCode(8);
   await q(
     `INSERT INTO $S.handoffs (token, kind, owner_tg_id, payload, expires_at) VALUES ($1, $2, $3, $4, now() + make_interval(secs => $5))`,
-    [token, kind, ownerTgId, JSON.stringify(payload), HANDOFF_TTL_S],
+    [token, kind, ownerTgId, JSON.stringify(payload), ttlS],
   );
-  return { token, frame: encodeFrame({ type: 'H', code: token }), expiresInS: HANDOFF_TTL_S };
+  return { token, frame: encodeFrame({ type: 'H', code: token }), expiresInS: ttlS };
+}
+
+/** A link or short note anyone can chirp: "the link is in the chat", Wi-Fi details, a menu. */
+export async function issueLink(body: Record<string, unknown>) {
+  const title = typeof body.title === 'string' ? body.title.trim().slice(0, 60) : '';
+  if (!title) throw new HttpError(400, 'title is required');
+  const rawUrl = typeof body.url === 'string' ? body.url.trim() : '';
+  if (rawUrl && !/^https:\/\/\S+$/.test(rawUrl)) throw new HttpError(400, 'link must start with https://');
+  const note = typeof body.note === 'string' ? body.note.trim().slice(0, 200) : '';
+  if (!rawUrl && !note) throw new HttpError(400, 'add a link or a note');
+  const from = typeof body.from === 'string' ? body.from.trim().slice(0, 40) : '';
+  const minutes = Number(body.minutes ?? 10);
+  if (!(minutes >= 1 && minutes <= 120)) throw new HttpError(400, 'minutes must be 1–120');
+  return issue('link', null, { title, url: rawUrl.slice(0, 500) || undefined, note: note || undefined, from: from || undefined }, Math.round(minutes * 60));
 }
 
 export async function issueConnect(initData: unknown, role: unknown) {
@@ -59,6 +74,16 @@ export async function handoffCard(device: Device, h: Handoff): Promise<Card> {
       kind: 'connect', ref,
       lines: [p.name, ...(p.role ? wrap(p.role, 40, 1) : []), p.username ? `@${p.username}` : 'Telegram contact'],
       tap: 'connect',
+      double: 'ignore',
+    };
+  }
+  if (h.kind === 'link') {
+    const p = h.payload;
+    await logHeard(device.id, 'link', h.token, p.title, { url: p.url, note: p.note, from: p.from });
+    return {
+      kind: 'link', ref,
+      lines: [...wrap(p.title, 40, 2), ...(p.note ? wrap(p.note, 40, 2) : []), ...(p.from ? [`from ${p.from}`] : [])],
+      tap: 'save to Telegram',
       double: 'ignore',
     };
   }
@@ -125,4 +150,15 @@ export async function checkPayment(payId: string) {
   if (!tx) return { paid: false, shop: p.shop, amountTon: nanoToTon(p.amount_nano) };
   await q(`UPDATE $S.payments SET tx_hash = $2, paid_at = now() WHERE id = $1`, [p.id, tx.hash]);
   return { paid: true, shop: p.shop, amountTon: nanoToTon(p.amount_nano), tx: explorerTx(tx.hash) };
+}
+
+export async function saveLink(device: Device & { tg_user_id: string }, h: Handoff) {
+  const p = h.payload;
+  await notify(
+    device.tg_user_id,
+    [`🔗 <b>${esc(p.title)}</b>`, p.note ? esc(p.note) : '', p.url ? esc(p.url) : '', p.from ? `from ${esc(p.from)}` : '']
+      .filter(Boolean)
+      .join('\n'),
+    p.url ? [[{ text: 'Open link', url: p.url }]] : undefined,
+  );
 }

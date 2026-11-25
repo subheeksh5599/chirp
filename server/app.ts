@@ -13,7 +13,7 @@ import {
   sessionCard,
   vote,
 } from './sessions.js';
-import { connect, handoffCard, liveHandoff, sendPayLink } from './handoff.js';
+import { connect, handoffCard, liveHandoff, saveLink, sendPayLink } from './handoff.js';
 import { liveMarker, markerCard, paperYes, saveMarket } from './markers.js';
 
 export async function heard(device: Device, text: unknown, nowMs = Date.now()): Promise<Card> {
@@ -72,6 +72,10 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
       const h = await liveHandoff(ref.id);
       if (!h) return errorCard('Card expired', 'ask them to chirp again');
       if (action === 'double') return infoCard('Ignored');
+      if (h.kind === 'link') {
+        await saveLink(device, h);
+        return infoCard('✓ Saved to Telegram', h.payload.title);
+      }
       if (h.kind === 'connect') {
         await connect(device, h);
         return infoCard(`✓ Connected with ${h.payload.name}`, 'both of you got a message');

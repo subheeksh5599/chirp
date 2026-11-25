@@ -12,7 +12,7 @@ import {
   setSlide,
   tally,
 } from './sessions.js';
-import { checkPayment, issueBill, issueConnect } from './handoff.js';
+import { checkPayment, issueBill, issueConnect, issueLink } from './handoff.js';
 import { createMarker } from './markers.js';
 import { searchMarkets } from './polymarket.js';
 import { handleUpdate } from './bot.js';
@@ -90,6 +90,7 @@ const routes: Array<[string, RegExp, Handler]> = [
 
   ['POST', /^\/api\/handoff\/connect$/, async (r) => ok(await issueConnect(r.body.initData, r.body.role), 201)],
   ['POST', /^\/api\/handoff\/bill$/, async (r) => ok(await issueBill(r.body), 201)],
+  ['POST', /^\/api\/handoff\/link$/, async (r) => ok(await issueLink(r.body), 201)],
   ['GET', /^\/api\/pay\/([0-9A-Z]{8})$/, async (_r, [id]) => ok(await checkPayment(id))],
 
   ['GET', /^\/api\/markets$/, async (r) => {
