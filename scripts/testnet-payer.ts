@@ -6,7 +6,7 @@
 //   npm run payer -- pay <to> <amountTon> <comment>   send a transfer with a text comment; prints the tx hash
 import { appendFileSync, readFileSync } from 'node:fs';
 import { mnemonicNew, mnemonicToPrivateKey } from '@ton/crypto';
-import { Address, TonClient, WalletContractV4, internal, fromNano, toNano } from '@ton/ton';
+import { Address, SendMode, TonClient, WalletContractV4, internal, fromNano, toNano } from '@ton/ton';
 
 const ENDPOINT = 'https://testnet.toncenter.com/api/v2/jsonRPC';
 const client = new TonClient({ endpoint: ENDPOINT, apiKey: process.env.TONCENTER_API_KEY || undefined });
@@ -55,6 +55,8 @@ async function main() {
     await retry(() =>
       w.opened.sendTransfer({
         seqno,
+        // fees on top, so the receiver gets the exact amount the server checks for
+        sendMode: SendMode.PAY_GAS_SEPARATELY | SendMode.IGNORE_ERRORS,
         secretKey: w.key.secretKey,
         messages: [internal({ to: Address.parse(to), value: toNano(amount), body: comment, bounce: false })],
       }),
