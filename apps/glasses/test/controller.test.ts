@@ -141,6 +141,20 @@ describe('glasses controller', () => {
     expect(outbox.map((m) => String(m.chatId)).sort()).toEqual([String(wearerTg), '8999001'].sort());
   });
 
+  it('a finished result gives way: the next card replaces "Connected with" instead of queueing', async () => {
+    const r = rig();
+    await r.c.start();
+    await pair(r.c);
+    const first = await issueConnect(initDataFor({ id: 8_999_002, first_name: 'Ana', username: 'ana' }));
+    await r.c.onFrame(first.frame);
+    await r.c.onInput('tap');
+    expect(r.lens()).toMatch(/Connected with Ana/);
+    const second = await issueConnect(initDataFor({ id: 8_999_003, first_name: 'Ben', username: 'ben' }));
+    await r.c.onFrame(second.frame);
+    expect(r.lens()).toMatch(/^Ben\n@ben/);
+    expect(r.lens()).not.toMatch(/heard · swipe for next/);
+  });
+
   it('a swiped-away room stays quiet but keeps counting presence', async () => {
     const r = rig();
     await r.c.start();
