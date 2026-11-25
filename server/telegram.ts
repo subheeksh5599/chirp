@@ -14,6 +14,16 @@ export async function tg<T = unknown>(method: string, body: Record<string, unkno
   return j.result;
 }
 
+let botName: Promise<string> | null = null;
+/** The bot's @username, read from Telegram with the configured token (cached per process). */
+export function botUsername(): Promise<string> {
+  botName ??= tg<{ username: string }>('getMe', {}).then((u) => u.username).catch((e) => {
+    botName = null;
+    throw e;
+  });
+  return botName;
+}
+
 export function send(chatId: number | string, text: string, buttons?: Button[][]) {
   return tg('sendMessage', {
     chat_id: chatId,

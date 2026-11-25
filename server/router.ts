@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { botUsername } from './telegram.js';
 import { HttpError, env } from './env.js';
 import { render, type Card } from './lens.js';
 import { createDevice, deviceFromAuth } from './devices.js';
@@ -36,6 +37,7 @@ const card = (c: Card) => ok({ card: c, text: render(c) });
 type Handler = (req: Req, params: string[]) => Promise<Res>;
 const routes: Array<[string, RegExp, Handler]> = [
   ['GET', /^\/api\/health$/, async () => ok({ ok: true, time: new Date().toISOString() })],
+  ['GET', /^\/api\/config$/, async () => ok({ bot: await botUsername() })],
 
   ['POST', /^\/api\/devices$/, async () => ok(await createDevice(), 201)],
   ['GET', /^\/api\/devices\/me$/, async (r) => {
