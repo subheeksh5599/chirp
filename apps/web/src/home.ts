@@ -7,7 +7,7 @@ api<{ bot: string }>('/api/config')
 
 $('#console').addEventListener('click', () => (location.href = '/console.html'));
 
-// Plays the sound-test frame: the glasses answer it with "not a Chirp code", which proves they heard it.
+// Plays the sound-test frame: the glasses answer with "Sound test heard".
 $('#hear').addEventListener('click', async () => {
   const btn = $('#hear') as HTMLButtonElement;
   btn.disabled = true;
