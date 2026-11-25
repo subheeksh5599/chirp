@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Chirp me</title>
+    <!-- Official Mini App SDK. Telegram updates it in place and publishes no SRI hash; it is loaded only on this page. -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Chirp your card</h1>
+      <p class="lede">Hold your phone near someone wearing Chirp glasses and tap the button. Their lens shows your card, and one tap connects you on Telegram.</p>
+      <div class="panel">
+        <div class="muted">Your card</div>
+        <div class="big" id="name">…</div>
+        <div class="muted" id="username"></div>
+        <label for="role">What you do (optional, shown on their lens)</label>
+        <input id="role" maxlength="60" placeholder="founder, Tidepool" />
+        <button id="chirp">Chirp my card</button>
+        <div class="status" id="status"></div>
+      </div>
+      <p class="muted" style="font-size: 0.85rem">The sound carries a one-minute code, not your details. Your name and username are only shown to a person whose glasses heard it, and only sent when they tap connect.</p>
+    </main>
+    <script type="module" src="/src/mini.ts"></script>
+  </body>
+</html>
