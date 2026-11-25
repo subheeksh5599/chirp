@@ -14,7 +14,8 @@
     "dev:api": "node --env-file=.env --import tsx server/local.ts",
     "dev:web": "npm run dev -w @chirp/web",
     "dev:glasses": "npm run dev -w @chirp/glasses",
-    "build": "npm run build -w @chirp/web && npm run build -w @chirp/glasses"
+    "build": "npm run build -w @chirp/web && npm run build -w @chirp/glasses",
+    "e2e:room": "node --env-file=.env --import tsx scripts/e2e-room.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.7",
