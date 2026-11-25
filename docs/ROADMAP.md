@@ -4,7 +4,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 0: prove the sound path
 
-**Status: done.** Codec table and air test in [MEASUREMENTS](MEASUREMENTS.md) §1–§4; `scripts/e2e-room.ts` plays room codes from the Mac speaker into the simulator. Distances of 1, 3 and 5 m with a phone sender are not measured yet.
+**Status: partly done.** Codec table and air test in [MEASUREMENTS](MEASUREMENTS.md) §1–§4; `scripts/e2e-room.ts` plays room codes from the Mac speaker into the simulator. The air test was a laptop into its own mic, not across a room; distances of 1, 3 and 5 m with a phone sender are not measured yet.
 
 - Glasses app skeleton in the simulator: mic on, PCM in, decoded text on the lens.
 - Test sender page that chirps a fixed string.
@@ -14,9 +14,9 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 1: wire format and server
 
-**Status: done.** `packages/wire` (32 tests), `POST /api/heard`, old-slot and forged codes refused (`rejects a recording of an old code and a forged code`).
+**Status: done.** `packages/wire` (36 tests), `POST /api/heard`, old-slot and forged codes refused (`rejects a recording of an old code and a forged code`).
 
-- `packages/wire`: frame, CRC, HMAC code derivation, slot maths, with test vectors.
+- `packages/wire`: frame (the codec's Reed-Solomon does error correction), HMAC code derivation, slot maths, with test vectors.
 - Server: sessions, `POST /heard`, code verification, health.
 - Glasses app: decode, report to the server, show the server's lens state.
 
@@ -63,7 +63,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 6: hardening
 
-**Status: done.** Every row in [PLAN.md](PLAN.md) §5 maps to a test, including the per-device rate limit and the rejected-code log. Subtitles run through Groq. Hold pauses listening.
+**Status: done except one number.** Every row in [PLAN.md](PLAN.md) §5 maps to a test, including the per-device rate limit and the rejected-code log. Subtitles run through Groq. Hold pauses listening. The delay of a real livestream was not measured; the limit is documented in the README.
 
 - Replay and forgery tests, rate limits, and the livestream limit documented with measured stream delay.
 - Live subtitles for broadcast sessions.

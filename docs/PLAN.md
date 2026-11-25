@@ -59,7 +59,7 @@ The lead user is the **audience at a live talk**, because broadcast and presence
 ### 4.1 Glasses app (`apps/glasses`)
 - Web app in the glasses companion app's WebView, connected to the glasses through the SDK.
 - Mic: glasses microphone, PCM 16 kHz signed 16-bit mono, 100 ms per event. Converted to float32 and fed to a rolling buffer, then to the data-over-sound decoder (open-source codec, WASM) set for 16 kHz input.
-- Decoded frame: check the version and CRC, de-duplicate, then call the server (`POST /heard`).
+- Decoded frame: check the type and alphabet (the codec's Reed-Solomon already corrected errors), de-duplicate, then call the server (`POST /api/heard`).
 - Views (one at a time, at most 3 lines): idle `listening…`, slide, poll, subtitle line, card, presence claim, error.
 - Inputs: tap = primary action, double-tap = secondary or dismiss, long press = pause listening.
 - Pairing: 6-digit code through the Telegram bot. Google sign-in doesn't work in this WebView.
@@ -77,7 +77,7 @@ The lead user is the **audience at a live talk**, because broadcast and presence
 - Chain client: builds testnet transactions for presence anchoring and payments and returns them as wallet links. Holds no keys for wearers.
 
 ### 4.4 Shared wire format (`packages/wire`)
-- Frame layout, CRC-8, HMAC code derivation, slot maths. One implementation, used byte for byte by the console, glasses and server.
+- Frame layout, HMAC code derivation, slot maths. One implementation, used byte for byte by the console, glasses and server.
 
 ## 5. Security and safety
 
