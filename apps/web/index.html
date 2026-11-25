@@ -3,37 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chirp · Any speaker can talk to your glasses</title>
+    <title>Chirp: any speaker can talk to your glasses</title>
+    <meta name="description" content="Glasses have no camera to scan a code. Chirp sends it as a short, soft sound, and one tap saves it to Telegram." />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <main>
-      <header class="top"><span class="mark">Chirp</span></header>
-      <h1>Any speaker can talk to your glasses.</h1>
-      <p class="lede">Display glasses can show and hear, but they can't see: no camera, no NFC, no Bluetooth scan. Chirp turns a short, soft sound into the way they receive things. A phone, a laptop or a stream plays a chirp; the glasses hear it and the right card appears on the lens. One tap, and it lands in Telegram.</p>
+    <main class="wide">
+      <header class="top"><a class="mark" href="/">Chirp</a><a href="/privacy.html">Privacy</a></header>
 
-      <div class="panel">
-        <h2 style="margin-top: 0">Send a chirp</h2>
+      <section class="hero">
+        <div>
+          <h1>Any speaker can talk to your glasses</h1>
+          <p class="lede">Glasses have no camera to scan a code. Chirp sends it as a short, soft sound, and one tap saves it to Telegram.</p>
+          <div class="actions">
+            <button id="console">Open the speaker console</button>
+            <button class="ghost" id="hear">Hear a chirp</button>
+          </div>
+        </div>
+        <div>
+          <div class="lens-frame"><div class="lens" id="lens">Chirp · listening (glasses mic)
+waiting for a chirp…
+
+
+hold: pause · swipe: mic · 2×tap: exit</div></div>
+          <p class="lens-caption">The glasses app, waiting for a chirp</p>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </section>
+
+      <section>
+        <h2>Send something to the glasses near you</h2>
         <ul class="list">
-          <li><div><b>Speaker console</b><div class="muted">Slides, live polls and presence for a talk, class or meetup.</div></div><a href="/console.html">Open</a></li>
-          <li><div><b>Chirp me</b><div class="muted">Share your contact card. Opens inside Telegram from the bot's menu button.</div></div><a id="bot" href="https://t.me/">Open bot</a></li>
-          <li><div><b>Share a link</b><div class="muted">“The link is in the chat”: chirp it on a call or in the room instead.</div></div><a href="/link.html">Open</a></li>
-          <li><div><b>Counter bill</b><div class="muted">Chirp a TON testnet bill to a customer.</div></div><a href="/shop.html">Open</a></li>
-          <li><div><b>Stream markers</b><div class="muted">Put the market you're talking about on viewers' lenses.</div></div><a href="/marker.html">Open</a></li>
-          <li><div><b>Sound test</b><div class="muted">Play a raw test chirp to check a room.</div></div><a href="/test.html">Open</a></li>
+          <li><a class="tool" href="/console.html"><span><b>Speaker console</b><span class="muted">Slides, live polls, subtitles and presence for a talk or class</span></span><span class="go">Open</span></a></li>
+          <li><a class="tool" href="/link.html"><span><b>Share a link</b><span class="muted">Chirp it on a call or in the room instead of posting it in a chat</span></span><span class="go">Open</span></a></li>
+          <li><a class="tool" id="bot" href="/mini.html"><span><b>Chirp me</b><span class="muted">Your contact card, from the bot’s menu button in Telegram</span></span><span class="go">Open bot</span></a></li>
+          <li><a class="tool" href="/shop.html"><span><b>Counter bill</b><span class="muted">A TON testnet bill the wearer confirms in their own wallet</span></span><span class="go">Open</span></a></li>
+          <li><a class="tool" href="/marker.html"><span><b>Stream markers</b><span class="muted">The market you are talking about, with live odds, on viewers' lenses</span></span><span class="go">Open</span></a></li>
+          <li><a class="tool" href="/test.html"><span><b>Sound test</b><span class="muted">Check that glasses in a room can hear you</span></span><span class="go">Open</span></a></li>
         </ul>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h2 style="margin-top: 0">On the glasses</h2>
-        <p class="muted" style="margin: 0">Open Chirp, send the 6-digit code on your lens to the bot, and keep the app open. Tap acts on a card, double-tap picks the other option, swipe goes back, long press pauses listening. Everything you heard is in <code>/heard</code>.</p>
-      </div>
-      <p class="muted" style="font-size: 0.85rem"><a href="/privacy.html">Privacy</a></p>
+      <section class="section">
+        <h2>On the glasses</h2>
+        <p class="muted">Open Chirp and send the 6-digit code on the lens to the bot. Tap acts on a card, double-tap picks the other option, swipe goes back, and a long press pauses listening. Everything the glasses heard is in <code>/heard</code>.</p>
+      </section>
+
+      <footer>Codes only: the sound carries a 9-character code, never your audio. <a href="/privacy.html">Privacy</a></footer>
     </main>
-    <script type="module">
-      fetch('/api/health').catch(() => {});
-      const bot = document.getElementById('bot');
-      fetch('/api/config').then((r) => r.json()).then((c) => { if (c.bot) bot.href = `https://t.me/${c.bot}`; }).catch(() => {});
-    </script>
+    <script type="module" src="/src/home.ts"></script>
   </body>
 </html>
