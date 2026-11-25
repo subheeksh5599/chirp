@@ -133,3 +133,9 @@ CREATE TABLE IF NOT EXISTS $S.resolves (
   at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS resolves_device_at ON $S.resolves (device_id, at);
+
+-- v4: a connect saves the contact for both people, keyed by Telegram account (the sender has no glasses)
+ALTER TABLE $S.contacts ADD COLUMN IF NOT EXISTS owner_tg_id bigint;
+UPDATE $S.contacts c SET owner_tg_id = d.tg_user_id FROM $S.devices d WHERE c.device_id = d.id AND c.owner_tg_id IS NULL;
+ALTER TABLE $S.contacts ALTER COLUMN device_id DROP NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS contacts_owner_other ON $S.contacts (owner_tg_id, other_tg_id);
