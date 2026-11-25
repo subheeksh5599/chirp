@@ -7,7 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "bench:codec": "node scripts/codec-bench.mjs"
+    "bench:codec": "node scripts/codec-bench.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc -p . && npm run typecheck -w @chirp/glasses -w @chirp/sender"
   },
   "devDependencies": {
     "@types/node": "^26.6.7",
