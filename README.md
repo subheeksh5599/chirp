@@ -6,7 +6,7 @@
 
 ### Any speaker can talk to your glasses.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/subheeksh5599/chirp/ci.yml?branch=main&label=CI)](https://github.com/subheeksh5599/chirp/actions)
+[![CI](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-110%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
