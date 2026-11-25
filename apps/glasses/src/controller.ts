@@ -10,6 +10,7 @@ export type Card = {
 export type CardResponse = { card: Card; text: string };
 
 export interface Api {
+  config?(): Promise<{ bot: string }>;
   createDevice(): Promise<{ deviceId: string; token: string; pairCode: string }>;
   me(token: string): Promise<{ paired: boolean; name: string | null; pairCode: string | null }>;
   heard(token: string, frame: string): Promise<CardResponse>;
@@ -86,7 +87,7 @@ export class Controller {
     }
     this.mode = 'pairing';
     await this.d.show(
-      ['Chirp · pair your Telegram', '', `Open @${this.d.botName} and send`, `      ${this.pairCode}`, '', 'this screen updates by itself'].join('\n'),
+      ['Chirp · pair your Telegram', '', `Open ${this.d.botName} and send`, `      ${this.pairCode}`, '', 'this screen updates by itself'].join('\n'),
     );
     this.d.log(`[chirp] pairing code=${this.pairCode}`);
   }

@@ -16,6 +16,7 @@ export function httpApi(base: string): Api {
     return j as T;
   };
   return {
+    config: () => call<{ bot: string }>('/api/config'),
     createDevice: () => call('/api/devices', undefined, {}),
     me: (token) => call('/api/devices/me', token),
     heard: (token, frame) => call<CardResponse>('/api/heard', token, { frame }),

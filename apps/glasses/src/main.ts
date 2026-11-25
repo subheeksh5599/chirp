@@ -13,7 +13,6 @@ import { Controller, type Input } from './controller';
 import { httpApi } from './http';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? '';
-const BOT_NAME = (import.meta.env.VITE_BOT_NAME as string | undefined) ?? 'Chirp567_bot';
 const TEXT_ID = 1;
 const TEXT_NAME = 'lens';
 const $ = (id: string) => document.getElementById(id)!;
@@ -72,8 +71,11 @@ async function main() {
     return;
   }
 
+  const api = httpApi(API_BASE);
+  // The bot's name comes from the server, which reads it from its own Telegram token.
+  const bot = await api.config!().then((r) => `@${r.bot}`).catch(() => 'the Chirp bot');
   const c = new Controller({
-    api: httpApi(API_BASE),
+    api,
     show,
     setMic: async (on, source) => {
       await bridge.audioControl(false);
@@ -84,7 +86,7 @@ async function main() {
     getItem: async (k) => (await bridge.getLocalStorage(k)) ?? '',
     setItem: (k, v) => bridge.setLocalStorage(k, v),
     log: (m) => console.log(m),
-    botName: BOT_NAME,
+    botName: bot,
   });
 
   bridge.onEvenHubEvent(async (event) => {
