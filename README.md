@@ -175,16 +175,73 @@ Design rules that make it a habit rather than a demo:
 
 ## Architecture
 
+```mermaid
+flowchart TB
+  subgraph S["1. Senders: any speaker in earshot"]
+    direction LR
+    console["Speaker console<br/>slides, polls, subtitles"]
+    link["Share a link<br/>links and notes"]
+    mini["Chirp me<br/>Telegram Mini App"]
+    shop["Counter bill<br/>TON testnet"]
+    marker["Stream markers<br/>live odds"]
+  end
+
+  subgraph G["2. Glasses app: Even Hub WebView on the phone"]
+    direction LR
+    mic["G2 or phone mic<br/>16 kHz PCM"] --> decoder["decoder.ts<br/>ggwave + same-chirp filter"] --> ctrl["controller.ts<br/>queue, gestures, live refresh"] --> lensout["G2 lens<br/>576 x 288 text"]
+  end
+
+  subgraph API["3. Chirp server: one Vercel function"]
+    direction LR
+    router["router.ts<br/>HTTP API"] --> app["app.ts<br/>resolve frame, rate limit, act"] --> flows["sessions / handoff / markers<br/>rooms, cards, bills, markets"] --> lens["lens.ts<br/>card text, 40 columns"]
+    flows --> db[("Neon Postgres")]
+    bot["bot.ts<br/>pairing, /heard, /met"] --> db
+  end
+
+  subgraph X["4. Outside services"]
+    direction LR
+    tg["Telegram Bot API"]
+    ton["TON testnet<br/>via toncenter"]
+    pm["Polymarket odds"]
+    groq["Groq speech to text"]
+  end
+
+  S == "soft chirp through the air<br/>9-character frame only" ==> mic
+  S -- "get a code" --> router
+  ctrl -- "POST /api/heard, /api/act" --> router
+  lens -- "card text" --> ctrl
+  flows --> tg
+  flows --> ton
+  flows --> pm
+  flows --> groq
+  tg -- "webhook" --> bot
 ```
- sender (web page / Mini App / stream)        server (Vercel + Neon)                    glasses app (Even Hub WebView)
- ─────────────────────────────────────        ──────────────────────                    ───────────────────────────────
- ask for the current frame  ───────────────▶  HMAC(session key, slot) → "B" + code
- play soft chirp  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ sound through the air ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ▶  mic PCM 16 kHz → decode
-                                              POST /api/heard ◀──────────────────────── 9-character frame
-                                              verify slot ±1, record hearing
-                                              lens card ───────────────────────────────▶ show it
-                                              POST /api/act ◀───────────────────────── tap / double-tap
- Telegram message / Tonkeeper link ◀───────── bot sends the result
+
+Four layers. Senders and the glasses never talk directly except through sound, and the sound carries only a 9-character frame. The server writes every word the lens shows, and every result ends in the wearer's Telegram chat. `packages/wire` (frames, HMAC slot codes, the presence rule) is shared by the senders, the glasses and the server; `packages/sound` (fades, low-pass, two copies) by every sender.
+
+### One chirp, end to end
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant S as Sender page
+  participant API as Chirp server
+  participant G as Glasses app
+  participant L as G2 lens
+  participant T as Telegram
+
+  S->>API: ask for the current code
+  API-->>S: frame, e.g. B5HP98WXY (HMAC of the room key and the 5 s slot)
+  S-)G: soft chirp through the air (two copies, about 3.5 s)
+  G->>G: decode 16 kHz mic audio, drop the second copy
+  G->>API: POST /api/heard {frame}
+  API->>API: rate limit, match slot ±1, record the hearing, log the outcome
+  API-->>G: card text (wrapped to 40 columns, lens-safe glyphs)
+  G->>L: show the card with its tap hints
+  L->>G: tap or double-tap
+  G->>API: POST /api/act {ref, tap}
+  API->>T: vote, contact, link, bill link or presence record
+  API-->>G: the next card
 ```
 
 ### HTTP surface
