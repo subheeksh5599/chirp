@@ -124,3 +124,12 @@ CREATE INDEX IF NOT EXISTS sessions_active ON $S.sessions (created_at) WHERE end
 -- v2: shared links / notes as a hand-off kind
 ALTER TABLE $S.handoffs DROP CONSTRAINT IF EXISTS handoffs_kind_check;
 ALTER TABLE $S.handoffs ADD CONSTRAINT handoffs_kind_check CHECK (kind IN ('connect', 'pay', 'link'));
+
+-- v3: every resolve the glasses ask for, so spam is rate-limited and rejected codes (replays, forgeries) are logged
+CREATE TABLE IF NOT EXISTS $S.resolves (
+  device_id uuid NOT NULL REFERENCES $S.devices(id) ON DELETE CASCADE,
+  frame text NOT NULL,
+  outcome text NOT NULL,
+  at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS resolves_device_at ON $S.resolves (device_id, at);
