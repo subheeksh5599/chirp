@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chirp · Counter</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <header class="top"><span class="mark">Chirp</span><a href="/">all tools</a></header>
+      <h1>Counter bill</h1>
+      <p class="lede">Chirp a bill to a customer wearing Chirp glasses. They see the shop and amount on their lens, tap once, and confirm in their own wallet. TON testnet only: no real money.</p>
+      <div class="panel" id="form">
+        <label for="shop">Shop name</label>
+        <input id="shop" maxlength="40" placeholder="Café Noor" />
+        <div class="row">
+          <div><label for="amount">Amount (testnet TON, up to 5)</label><input id="amount" type="number" min="0.01" max="5" step="0.01" value="0.5" /></div>
+          <div><label for="memo">Memo (optional)</label><input id="memo" maxlength="60" placeholder="2 flat whites" /></div>
+        </div>
+        <button id="chirp">Create bill and chirp</button>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="panel hidden" id="waiting">
+        <div class="muted">Waiting for payment on TON testnet</div>
+        <div class="big" id="bill"></div>
+        <div class="row">
+          <button class="ghost" id="again">Chirp again</button>
+          <button class="ghost" id="reset">New bill</button>
+        </div>
+        <div class="status" id="pay-status"></div>
+      </div>
+    </main>
+    <script type="module" src="/src/shop.ts"></script>
+  </body>
+</html>
