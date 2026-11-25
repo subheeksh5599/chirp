@@ -12,6 +12,8 @@ type Admin = {
   votes: { a: number; b: number; total: number };
   chirp: { frame: string; validForMs: number } | null;
   caption: string | null;
+  /** Exactly what listeners' lenses show for this slide, rendered by the server. */
+  lens: string | null;
 };
 
 const KEY = 'chirp.console.session';
@@ -29,18 +31,17 @@ function show(s: Admin) {
   $('#live-title').textContent = s.title;
   $('#live-id').textContent = s.id;
   const slide = s.slides[s.currentSlide];
-  $('#slide-title').textContent = slide.poll ? `Poll · ${slide.poll.question}` : slide.title;
-  $('#slide-meta').textContent = `Slide ${s.currentSlide + 1} of ${s.slides.length}${slide.note ? ` · ${slide.note}` : ''}`;
+  $('#lens').textContent = s.lens ?? 'Session ended\nListeners can claim presence now';
+  $('#slide-meta').textContent = `What every lens in the room shows: slide ${s.currentSlide + 1} of ${s.slides.length}`;
   $('#listeners').textContent = String(s.listeners);
   $('#claims').textContent = String(s.claims);
   if (slide.poll) {
     $('#votes').textContent = `${s.votes.a} / ${s.votes.b}`;
     $('#votes-label').textContent = `${slide.poll.a} / ${slide.poll.b}`;
   } else {
-    $('#votes').textContent = '–';
-    $('#votes-label').textContent = 'no poll on this slide';
+    $('#votes').textContent = 'No poll';
+    $('#votes-label').textContent = 'on this slide';
   }
-  $('#caption').textContent = s.caption ?? '';
   ($('#prev') as HTMLButtonElement).disabled = s.currentSlide === 0 || s.ended;
   ($('#next') as HTMLButtonElement).disabled = s.currentSlide >= s.slides.length - 1 || s.ended;
   if (s.ended) {
@@ -166,7 +167,7 @@ $('#subs').addEventListener('click', async () => {
             token: session!.adminSecret,
             body: { audio: b64, mime },
           });
-          if (text) $('#caption').textContent = text;
+          if (text) void refresh(); // the caption shows inside the lens preview
         } catch (e) {
           status($('#subs-status'), String((e as Error).message), 'err');
         }
