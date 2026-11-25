@@ -1,0 +1,21 @@
+:root{--bg:#111213;--text:#eceef0;--text2:#a9adb2;--text3:#80858b;--accent:#7ee2a2;--line:rgb(236 238 240/.12)}
+*{box-sizing:border-box}html,body{margin:0;width:1920px;height:1080px;overflow:hidden}
+body{font-family:-apple-system,"SF Pro Display",system-ui,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+body.card{background:var(--bg)}
+.wrap{position:absolute;left:160px;right:160px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center}
+.mark{font-weight:600;font-size:34px;color:var(--text2);margin-bottom:56px}
+h1{font-size:92px;line-height:1.05;font-weight:600;letter-spacing:-0.02em;margin:0 0 36px;max-width:1500px}
+p{font-size:40px;line-height:1.45;color:var(--text2);margin:0;max-width:1400px}
+.flow{display:flex;align-items:center;gap:28px;margin-top:72px;font-size:36px}
+.node{border:1px solid var(--line);border-radius:14px;padding:22px 30px;background:#18191b}
+.node b{display:block;font-weight:600;color:var(--text)}.node span{color:var(--text3);font-size:28px}
+.arrow{color:var(--accent);font-size:34px;white-space:nowrap}
+.lens{background:#050706;color:var(--accent);font-family:ui-monospace,Menlo,monospace}
+.rows{margin-top:56px;display:grid;gap:22px;font-size:38px}
+.rows div{display:grid;grid-template-columns:520px 1fr;gap:32px;padding-top:22px;border-top:1px solid var(--line)}
+.rows b{font-weight:600}.rows span{color:var(--text2)}.rows code{font-family:ui-monospace,Menlo,monospace;color:var(--accent);font-size:34px}
+/* captions over footage */
+body.cap{background:transparent}
+.capbar{position:absolute;left:60px;bottom:44px;max-width:1800px;font-size:44px;font-weight:600;line-height:1.25;padding:20px 30px;border-radius:14px;background:rgb(17 18 19/.92);border:1px solid var(--line)}
+.capbar em{font-style:normal;color:var(--accent)}
+.label{position:absolute;font-size:28px;color:var(--text2);font-weight:500}
