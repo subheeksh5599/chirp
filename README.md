@@ -164,7 +164,7 @@ Glasses with a display already do messages, navigation, captions and AI answers.
 | Everyday moment | How often | Who chirps | What the lens shows | One tap does |
 |---|---|---|---|---|
 | **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host, from [Share a link](https://chirp-liart-six-38.vercel.app/link.html), phone near the mic | `Launch thread · from Host` | Saves the link to your Telegram |
-| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam · founder, Tidepool · @samreyes` | Both of you get a message; saved in `/met` |
+| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam · founder, Tidepool · @samreyes` | Both of you get a message and the contact in `/met` |
 | **Class, meetup or talk** ("scan before I change the slide") | Weekly, daily for students | The speaker console | Current slide, live poll, subtitles | Vote, save the deck, claim presence |
 | **Stream or podcast** ("check the market I'm talking about") | Daily for viewers | Mixed into the stream audio | The market with live odds | Save it, or double-tap for a paper position |
 | **Counter or stall** ("scan to pay") | Where crypto is accepted | The counter page | `Café Noor · 0.5 TON · testnet` | Opens the payment in the wearer's wallet |
@@ -351,7 +351,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Presence: rule, signed record, public verify route | ✅ | `server/test/server.test.ts` |
 | Presence anchor on TON testnet | ✅ record `27VHDCYT`: 6 room codes heard through the air by the simulator, signed, [anchored](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b) | `npm run presence:live`, then `npm run testnet -- anchor <id>`; [`/api/presence/27VHDCYT`](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT) shows `signatureValid: true` |
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
-| Two real Telegram accounts connected by one chirp | ✅ 2026-11-25: account B chirped its card from the Mini App on a phone; the simulator, paired to account A, heard `HBKPBM2ET`, a tap connected them, and the contact is saved in `/met` | simulator log: `card connect` → `acted tap → Connected with …` |
+| Two real Telegram accounts connected by one chirp | ✅ 2026-11-25: account B chirped its card from the Mini App on a phone; the simulator, paired to account A, heard `HBKPBM2ET`, a tap connected them; since that run both accounts keep the contact in `/met` (`the person who chirped their card, with no glasses, also gets the contact in /met`) | simulator log: `card connect` → `acted tap → Connected with …` |
 | Sender pages preview exactly what the lens shows | ✅ | `server/test/server.test.ts` (`the console shows the same text a listener gets, slide and poll`) |
 | Bills on TON testnet | ✅ bill `DTJ5NFAM` paid 0.05 TON from a second wallet, [marked paid by production](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028) | `npm run testnet -- bill` |
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |

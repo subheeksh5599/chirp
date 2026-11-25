@@ -44,7 +44,7 @@ Status updated 2026-11-25. Each phase ends with something real running. A phase 
 
 ## Phase 4: Hand-off
 
-**Status: done in tests and on prod; two real accounts not connected yet.** Contacts, links and bills pass server tests against the real database. Bill `DTJ5NFAM` was paid on TON testnet from a second wallet and production marked it paid.
+**Status: done.** Two real Telegram accounts connected through one chirp and one tap (account B's phone chirped its card into the simulator paired to account A); both keep the contact in `/met`. Contacts, links and bills pass server tests against the real database. Bill `DTJ5NFAM` was paid on TON testnet from a second wallet and production marked it paid.
 
 - Telegram Mini App sender for cards.
 - Tap sends the intro and saves the contact (`/met`).
