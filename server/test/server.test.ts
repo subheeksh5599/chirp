@@ -289,6 +289,41 @@ describe('hand-off: links and notes', () => {
   });
 });
 
+describe('sender previews match the lens exactly', () => {
+  const req = (method: string, path: string, body = {}, headers = {}) =>
+    route({ method, path, query: new URLSearchParams(), headers, body });
+  it('the console shows the same text a listener gets, slide and poll', async () => {
+    const { device } = await pairedDevice();
+    const { id, adminSecret } = await createSession({ title: 'Preview talk', slides: SLIDES });
+    const auth = { authorization: `Bearer ${adminSecret}` };
+    for (const index of [0, 1]) {
+      const s = await adminSession(id, auth.authorization);
+      if (index) await setSlide(s, index);
+      const admin = (await req('GET', `/api/sessions/${id}/admin`, {}, auth)).body as { lens: string; chirp: { frame: string } };
+      const heardCard = await heard(device, admin.chirp.frame);
+      expect(render(heardCard)).toBe(admin.lens);
+    }
+  });
+  it('an ended session has no preview', async () => {
+    const { id, adminSecret } = await createSession({ title: 'Done talk', slides: SLIDES });
+    await endSession(await adminSession(id, `Bearer ${adminSecret}`));
+    const r = (await req('GET', `/api/sessions/${id}/admin`, {}, { authorization: `Bearer ${adminSecret}` })).body as { lens: unknown };
+    expect(r.lens).toBeNull();
+  });
+  it('a link hand-off previews exactly what the wearer sees', async () => {
+    const { device } = await pairedDevice();
+    const l = await issueLink({ title: 'Slides from today', url: 'https://example.com/d', note: 'the full deck', from: 'Ana' });
+    expect(render(await heard(device, l.frame))).toBe(l.lens);
+    expect(l.lens).toContain('Slides from today');
+  });
+  it('a bill previews exactly what the wearer sees', async () => {
+    const { device } = await pairedDevice();
+    const b = await issueBill({ shop: 'Preview Café', amountTon: 0.25, memo: 'one tea' });
+    expect(render(await heard(device, b.frame))).toBe(b.lens);
+    expect(b.lens).toMatch(/0\.25 TON · testnet/);
+  });
+});
+
 describe('sync markers (live market data)', () => {
   it('search returns live markets with a YES price', async () => {
     const ms = await searchMarkets('bitcoin');
