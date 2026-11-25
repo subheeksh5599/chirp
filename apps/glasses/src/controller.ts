@@ -113,6 +113,7 @@ export class Controller {
         const next = await this.d.api.sessionState(this.token, this.card.card.ref.id);
         if (next.text !== this.card.text) {
           this.card = next;
+          this.d.log(`[chirp] refreshed ${next.card.lines[0] ?? ''}`);
           await this.paint();
         }
       }
