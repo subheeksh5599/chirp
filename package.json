@@ -19,6 +19,7 @@
     "check:whitelist": "node scripts/check-network-whitelist.mjs",
     "icon": "node scripts/make-icon.mjs",
     "bench:channels": "node scripts/channel-bench.mjs",
+    "presence:live": "node --env-file=.env --import tsx scripts/presence-live.ts",
     "testnet": "node --env-file=.env --import tsx scripts/testnet-run.ts",
     "payer": "node --env-file=.env --import tsx scripts/testnet-payer.ts"
   },
