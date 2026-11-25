@@ -260,7 +260,7 @@ describe('hand-off: contact cards', () => {
     expect(c.lines).toEqual(['Sam', 'founder, Tidepool', '@samreyes']);
     const done = await act(wearer.device, c.ref, 'tap');
     expect(done.lines[0]).toBe('Connected with Sam');
-    expect(sentTo(5150)[0].text).toMatch(/Priya Rao.*@priya.*wants to connect/);
+    expect(sentTo(5150)[0].text).toMatch(/Priya Rao.*@priya.*just met you through Chirp/);
     expect(sentTo(wearer.tgId)[0].text).toMatch(/Saved contact: <b>Sam<\/b> · founder, Tidepool · @samreyes/);
     const row = await one(`SELECT other_name, role FROM $S.contacts WHERE device_id = $1`, [wearer.device.id]);
     expect(row).toMatchObject({ other_name: 'Sam', role: 'founder, Tidepool' });
@@ -405,6 +405,19 @@ describe('bot log commands', () => {
     expect(h).toMatch(/👋 Noor/);
     await handleUpdate({ message: { chat: { id: w.tgId, type: 'private' }, from: { id: w.tgId, first_name: 'Lee' }, text: '/met' } });
     expect(sentTo(w.tgId).at(-1)!.text).toMatch(/Noor · designer/);
+  });
+  it('the person who chirped their card, with no glasses, also gets the contact in /met', async () => {
+    const w = await pairedDevice('Lee', 'lee');
+    const card = await issueConnect(initDataFor({ id: 7373, first_name: 'Noor', username: 'noor' }), 'designer');
+    await act(w.device, (await heard(w.device, card.frame)).ref, 'tap');
+    expect(sentTo(7373).at(-1)!.text).toMatch(/Lee.*just met you through Chirp\. Saved to your contacts/);
+    await handleUpdate({ message: { chat: { id: 7373, type: 'private' }, from: { id: 7373, first_name: 'Noor' }, text: '/met' } });
+    expect(sentTo(7373).at(-1)!.text).toMatch(/People you met[\s\S]*Lee · @lee/);
+    // meeting again updates, never duplicates, on both sides
+    const again = await issueConnect(initDataFor({ id: 7373, first_name: 'Noor', username: 'noor' }));
+    await act(w.device, (await heard(w.device, again.frame)).ref, 'tap');
+    const rows = await q<{ owner_tg_id: string }>(`SELECT owner_tg_id FROM $S.contacts WHERE other_tg_id IN ($1, 7373) AND owner_tg_id IN ($1, 7373)`, [w.tgId]);
+    expect(rows).toHaveLength(2);
   });
   it('anything else gets help with the Mini App button', async () => {
     await handleUpdate({ message: { chat: { id: 31, type: 'private' }, from: { id: 31, first_name: 'Z' }, text: 'hi' } });
