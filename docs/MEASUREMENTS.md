@@ -45,6 +45,10 @@ The shipped default is **two softened copies at volume 12**: it decoded as often
 | A slide change reaches the lens without a new chirp | ✓ |
 | A tap on the glasses votes in the poll | ✓ (vote recorded in the database) |
 
+### 4b. A real presence run on production
+
+`npm run presence:live`, 2026-11-25: a session on production played its rotating room code from the Mac speaker every ~12 s, into the simulator running the glasses app. The glasses heard **6 of 8** room codes, enough for the session's rule (2 codes across 1 minute), and the claim produced record `27VHDCYT`. Same worst-case setup as §3 (a laptop into its own mic).
+
 ## 5. Through call and stream codecs (offline)
 
 `npm run bench:channels` (`scripts/channel-bench.mjs`, 20 random codes per row). Each code is made with the shipped sender settings (normal mode, volume 12, softened, sent twice). It goes through a real codec with ffmpeg, comes back as 16 kHz mono (what the glasses mic delivers), and is decoded the way the glasses app decodes it. "Room noise" adds white noise 10 dB below the chirp before the codec. Raw output: [`bench-channels.txt`](bench-channels.txt).
