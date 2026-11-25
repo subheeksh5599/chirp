@@ -210,7 +210,7 @@ Design rules that make it a habit rather than a demo:
 
 1. **Frame.** 9 ASCII characters: a type (`B` broadcast, `H` hand-off, `S` stream marker) and an 8-character Crockford base32 code (40 bits). The codec adds its own Reed-Solomon error correction. Details: [docs/PROTOCOL.md](docs/PROTOCOL.md).
 2. **Sound.** The codec's audible-normal mode, softened: 25 ms fades so there are no clicks, a 6.8 kHz low-pass, and two copies 250 ms apart so either one arriving is enough. Volume 12 (the sender pages allow 1 to 40).
-3. **Hearing.** The glasses app feeds each mic audio event (about 100 ms of 16 kHz PCM) to the decoder and ignores the same text within 10 seconds.
+3. **Hearing.** The glasses app feeds each mic audio event (about 100 ms of 16 kHz PCM) to the decoder and drops the same text within 4 seconds, which is the second copy of one press.
 4. **Resolving.** The server matches broadcast codes against every live session's key for the current slot and its neighbours; hand-off and marker codes are looked up and must not be expired.
 5. **Card.** The server writes the words, wrapped to 40 columns, with a hint line (`tap: … · 2×tap: … · swipe: back`). The glasses only lay it out.
 6. **Act.** A tap votes, connects, saves or claims; the bot delivers the result to Telegram.
