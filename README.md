@@ -5,7 +5,7 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/subheeksh5599/chirp/ci.yml?branch=main&label=CI)](https://github.com/subheeksh5599/chirp/actions)
-![Tests](https://img.shields.io/badge/tests-88%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-89%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -32,7 +32,7 @@ The sound only carries a short code. The content lives on the server. And presen
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator, Mac speaker → Mac mic | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
-| Tests | ✅ 88 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 89 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -177,6 +177,7 @@ Design rules that make it a habit rather than a demo:
 
 | Route | Who calls it | What it does |
 |---|---|---|
+| `GET /api/config` | glasses, web | The bot's username, read from Telegram with the server's token |
 | `POST /api/devices` | glasses | New device token and 6-digit pairing code |
 | `GET /api/devices/me` | glasses | Paired yet? |
 | `POST /api/heard` | glasses | A decoded frame in, a lens card out |
@@ -345,7 +346,7 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 88 tests (server tests use a throwaway schema)
+npm test                      # 89 tests (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
 ```
@@ -356,14 +357,14 @@ The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.en
 
 | Suite | Tests |
 |---|---|
-| `server/test/server.test.ts` | 32 |
+| `server/test/server.test.ts` | 33 |
 | `packages/wire/test/wire.test.ts` | 19 |
 | `packages/wire/test/properties.test.ts` | 13 |
 | `apps/glasses/test/controller.test.ts` | 9 |
 | `packages/sound/test/soften.test.ts` | 7 |
 | `packages/sound/test/sound.test.ts` | 4 |
 | `packages/wire/test/deck.test.ts` | 4 |
-| **Total** | **88** |
+| **Total** | **89** |
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. Server and controller tests run against the real database in a throwaway schema, and the market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
