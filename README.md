@@ -1,11 +1,13 @@
 <div align="center">
 
+<img src="apps/glasses/icon.png" width="48" height="48" alt="Chirp icon: a dot with three sound arcs" style="image-rendering: pixelated">
+
 # CHIRP
 
 ### Any speaker can talk to your glasses.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/subheeksh5599/chirp/ci.yml?branch=main&label=CI)](https://github.com/subheeksh5599/chirp/actions)
-![Tests](https://img.shields.io/badge/tests-96%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-110%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -32,7 +34,7 @@ The sound only carries a short code. The content lives on the server. And presen
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator, Mac speaker → Mac mic | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
-| Tests | ✅ 96 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 110 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -44,6 +46,12 @@ Everyone building for glasses builds a feed: your messages, your prices, your in
 - **Sync.** A stream host marks the market they're talking about. Viewers' lenses show it with live odds, and a double-tap opens a paper position.
 
 Every one of those ends in your Telegram chat with the bot, and `/heard` keeps the day's list.
+
+| The speaker console | Sharing a link |
+|---|---|
+| ![Speaker console on production: the lens preview shows the current slide exactly as listeners see it](docs/media/console.png) | ![Share-a-link page on production with the lens preview of the card](docs/media/link.png) |
+
+Each sender page shows the lens text the server will send, rendered by the same function, so the preview can't drift from what wearers see.
 
 ## Table of contents
 
@@ -223,6 +231,7 @@ Full tables and how to reproduce them: [docs/MEASUREMENTS.md](docs/MEASUREMENTS.
 
 - **Offline, through a simulated 16 kHz mic path:** audible-normal decodes **100% down to 5 dB SNR and 95% at 0 dB**. The faster modes fail outright.
 - **Band:** all of the chirp's energy sits between **1,875 and 6,094 Hz**.
+- **Through codecs (offline, 20 codes each):** Opus voice at 24 kbps, AAC, MP3 and G.722 all carried **20/20**. Opus at 16 kbps with room noise carried **12/20**. An 8 kHz phone line carried **0/20**, because it stops at 4 kHz.
 - **Through the air, worst case (laptop speaker into its own mic):** one copy decoded **60%** of the time; **two copies in one chirp, 80–90%**. A capture showed the laptop suppressing its own output as echo (chirps arrive with 22–26 dB SNR but cut short), which is why the sender should be a different device. Pauses between chirps made no difference.
 
 ## On the lens
@@ -234,6 +243,12 @@ Poll · Ship weekly or monthly?             founder, Tidepool
 tap: weekly · 2×tap: monthly · swipe: back
                                            tap: connect · 2×tap: ignore · swipe: back
 ```
+
+Real captures from the simulator (576×288, the G2 display):
+
+| First launch: pairing | A poll slide, heard through the air | After a tap vote |
+|---|---|---|
+| ![Lens asking the wearer to send a 6-digit code to the bot](docs/media/lens-pairing.png) | ![Lens showing a poll slide](docs/media/lens-poll.png) | ![Lens showing the poll tally after a vote](docs/media/lens-voted.png) |
 
 Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic · 2×tap: exit`. Double-tap on the root opens the system exit dialog.
 
@@ -263,7 +278,12 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | `/heard`, `/met`, `/paper` | ✅ | `server/test/server.test.ts` |
 | Packs to `.ehpk` | ✅ | `npm run pack -w @chirp/glasses` |
 | Real glasses microphone | ⏳ not tested | no device; phone-mic fallback built (swipe on the root screen) |
-| Phone as sender at 1–5 m, call audio, stream audio | ⏳ not measured | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) §5 |
+| Through call, stream and podcast codecs | ✅ 20/20 clean on every modern codec; 12/20 on 16 kbps Opus with room noise; 0/20 on an 8 kHz phone line | `npm run bench:channels`, [MEASUREMENTS §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline) |
+| Phone as sender across a room | ⏳ not measured | `scripts/count-heard.mjs` counts each trial |
+| Live call with the app's noise suppression | ⏳ not measured | needs two accounts on a call |
+| Store icon (24×24, store pixel rules) | ✅ | `scripts/test/icon.test.ts` |
+| Glasses reach only whitelisted origins | ✅ checked in CI | `scripts/test/whitelist.test.ts`, `npm run check:whitelist` |
+| Spam chirps rate-limited, rejected codes logged | ✅ | `a device spamming chirps is slowed down; other devices are not` |
 | Locked-phone behaviour | ⏳ needs a beta install on a device | |
 
 ## Definition of done
@@ -349,9 +369,14 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 96 tests (server tests use a throwaway schema)
+npm test                      # 110 tests (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
+npm run bench:channels        # decode rates through call, stream and podcast codecs (needs ffmpeg)
+npm run check:whitelist       # the glasses build reaches only the manifest's whitelisted origins
+npm run icon                  # regenerate the store icon (apps/glasses/icon.png)
+npm run payer -- new          # testnet-only payer wallet, mnemonic kept in .env
+npm run testnet -- bill       # issue a bill on prod, pay it from the payer, wait until prod sees it
 ```
 
 The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.env.production` for builds). Deploying: `npx vercel deploy --prod` with the same variables set in the Vercel project.
@@ -360,15 +385,18 @@ The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.en
 
 | Suite | Tests |
 |---|---|
-| `server/test/server.test.ts` | 37 |
+| `server/test/server.test.ts` | 39 |
 | `packages/wire/test/wire.test.ts` | 19 |
 | `packages/wire/test/properties.test.ts` | 13 |
 | `apps/glasses/test/controller.test.ts` | 9 |
 | `packages/sound/test/soften.test.ts` | 7 |
+| `scripts/test/whitelist.test.ts` | 5 |
+| `scripts/test/icon.test.ts` | 4 |
 | `packages/sound/test/sound.test.ts` | 4 |
 | `packages/wire/test/deck.test.ts` | 4 |
+| `scripts/test/privacy.test.ts` | 3 |
 | `apps/web/test/envelope.test.ts` | 3 |
-| **Total** | **96** |
+| **Total** | **110** |
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. Server and controller tests run against the real database in a throwaway schema, and the market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
