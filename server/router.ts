@@ -12,6 +12,7 @@ import {
   setCaption,
   setSlide,
   tally,
+  roomCard,
 } from './sessions.js';
 import { checkPayment, issueBill, issueConnect, issueLink } from './handoff.js';
 import { createMarker } from './markers.js';
@@ -69,6 +70,7 @@ const routes: Array<[string, RegExp, Handler]> = [
       claims: Number(stats.claims),
       votes: await tally(s.id, s.current_slide),
       chirp: s.ended_at ? null : await currentFrame(s),
+      lens: s.ended_at ? null : render(roomCard(s)),
       caption: s.caption,
     });
   }],

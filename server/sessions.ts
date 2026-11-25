@@ -208,10 +208,8 @@ export async function sessionCard(device: Device, s: Session): Promise<Card> {
   }
   const i = s.current_slide;
   const slide = s.slides[i];
-  const header = `${s.title} · ${i + 1}/${s.slides.length}`;
-  const fresh = s.caption && s.caption_at && Date.now() - Date.parse(s.caption_at) < 20_000;
-  const caption = fresh ? wrap(`“${s.caption}”`, 40, 1) : [];
   if (slide.poll) {
+    const header = `${s.title} · ${i + 1}/${s.slides.length}`;
     const mine = await myVote(s.id, i, device.id);
     if (mine !== null) {
       const t = await tally(s.id, i);
@@ -220,6 +218,19 @@ export async function sessionCard(device: Device, s: Session): Promise<Card> {
         lines: [header, ...wrap(slide.poll.question, 40, 2), `You: ${mine === 0 ? slide.poll.a : slide.poll.b} · ${slide.poll.a} ${share(t.a, t.total)} · ${slide.poll.b} ${share(t.b, t.total)}`],
       };
     }
+  }
+  return roomCard(s);
+}
+
+/** What every listener sees for the current slide before they act. The console shows the same text. */
+export function roomCard(s: Session): Card {
+  const ref = { type: 'session' as const, id: s.id };
+  const i = s.current_slide;
+  const slide = s.slides[i];
+  const header = `${s.title} · ${i + 1}/${s.slides.length}`;
+  const fresh = s.caption && s.caption_at && Date.now() - Date.parse(s.caption_at) < 20_000;
+  const caption = fresh ? wrap(`“${s.caption}”`, 40, 1) : [];
+  if (slide.poll) {
     return {
       kind: 'poll', ref, live: true,
       lines: [header, ...wrap(`Poll · ${slide.poll.question}`, 40, 2), ...caption],
