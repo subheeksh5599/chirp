@@ -3,6 +3,25 @@ import ggwaveFactory from 'ggwave';
 
 export type Decoded = { text: string; at: number };
 
+/**
+ * One press plays two copies about 2 s apart; both can decode. This keeps the first and drops the
+ * echo, and nothing longer: a second press of the same code a few seconds later is a new chirp.
+ */
+export const SAME_CHIRP_MS = 4_000;
+
+export class Dedupe {
+  private lastText = '';
+  private lastAt = -Infinity;
+  constructor(private windowMs = SAME_CHIRP_MS) {}
+  /** True when this text is new, or the same text heard after the window. */
+  accept(text: string, at: number): boolean {
+    if (text === this.lastText && at - this.lastAt < this.windowMs) return false;
+    this.lastText = text;
+    this.lastAt = at;
+    return true;
+  }
+}
+
 type GG = {
   getDefaultParameters(): Record<string, number>;
   init(p: Record<string, number>): number;
@@ -13,8 +32,7 @@ type GG = {
 export class ChirpDecoder {
   private gg!: GG;
   private inst = -1;
-  private lastText = '';
-  private lastAt = 0;
+  private dedupe = new Dedupe();
   // Stats feed the on-lens debug line and the field measurements.
   chunks = 0;
   peak = 0;
@@ -45,10 +63,6 @@ export class ChirpDecoder {
     if (!res || res.length === 0) return null;
     const text = new TextDecoder().decode(res);
     const at = Date.now();
-    // The same chirp heard twice within 10 s counts once.
-    if (text === this.lastText && at - this.lastAt < 10_000) return null;
-    this.lastText = text;
-    this.lastAt = at;
-    return { text, at };
+    return this.dedupe.accept(text, at) ? { text, at } : null;
   }
 }
