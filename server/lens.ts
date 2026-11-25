@@ -49,13 +49,28 @@ export function wrap(text: string, cols = LENS_COLS, maxLines = 2): string[] {
 
 export const clip = (s: string, n = LENS_COLS) => (s.length <= n ? s : `${s.slice(0, n - 1)}…`);
 
+/**
+ * Characters the G2 lens font can draw: printable ASCII plus the few symbols the hints use.
+ * The simulator logs "glyph dsc. not found" for anything else (✓ was the first one caught).
+ */
+export const LENS_GLYPHS = /^[\x20-\x7E·×…]*$/;
+const SUBSTITUTE: Record<string, string> = { '“': '"', '”': '"', '‘': "'", '’': "'", '—': '-', '–': '-', '✓': '', '→': '>' };
+
+/** Rewrite text into characters the lens font has: accents dropped (é → e), anything else unknown becomes '?'. */
+export function lensSafe(text: string): string {
+  return [...text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')]
+    .map((c) => (LENS_GLYPHS.test(c) ? c : (SUBSTITUTE[c] ?? (/\s/.test(c) ? ' ' : '?'))))
+    .join('')
+    .replace(/^ +/, '');
+}
+
 /** Final lens text: content lines plus one hint line. */
 export function render(card: Card): string {
-  const body = card.lines.slice(0, MAX_LINES).map((l) => clip(l));
+  const body = card.lines.slice(0, MAX_LINES).map((l) => clip(lensSafe(l)));
   const hints = [card.tap && `tap: ${card.tap}`, card.double && `2×tap: ${card.double}`, 'swipe: back']
     .filter(Boolean)
     .join(' · ');
-  return [...body, '', clip(hints, LENS_COLS + 12)].join('\n');
+  return [...body, '', clip(lensSafe(hints), LENS_COLS + 12)].join('\n');
 }
 
 export const errorCard = (...lines: string[]): Card => ({ kind: 'error', lines });

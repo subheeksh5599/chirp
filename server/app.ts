@@ -20,7 +20,10 @@ import { liveMarker, markerCard, paperYes, saveMarket } from './markers.js';
 /** Resolves a device may ask for per minute. A talk chirps every 20 s and a hand-off twice, so 30 is generous. */
 export const RESOLVES_PER_MINUTE = 30;
 
-export type Outcome = 'ok' | 'not-a-code' | 'room-code-rejected' | 'card-expired' | 'marker-expired';
+/** The fixed code the sound-test page and the home page play (`HTEST0000`). */
+export const SOUND_TEST_CODE = 'TEST0000';
+
+export type Outcome = 'ok' | 'sound-test' | 'not-a-code' | 'room-code-rejected' | 'card-expired' | 'marker-expired';
 
 export async function heard(device: Device, text: unknown, nowMs = Date.now()): Promise<Card> {
   if (!device.tg_user_id) return errorCard('Not paired yet', 'open the Chirp bot in Telegram', 'and send your pairing code');
@@ -43,6 +46,9 @@ async function resolve(device: Device, text: string, nowMs: number): Promise<[Ca
     if (!hit) return [errorCard('Room code expired', 'wait for the next chirp'), 'room-code-rejected'];
     await recordHearing(device, hit.session, hit.slot);
     return [await sessionCard(device, hit.session), 'ok'];
+  }
+  if (f.type === 'H' && f.code === SOUND_TEST_CODE) {
+    return [infoCard('Sound test heard', 'these glasses can hear that speaker'), 'sound-test'];
   }
   if (f.type === 'H') {
     const h = await liveHandoff(f.code);
@@ -75,7 +81,7 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
       }
       if (action === 'tap') {
         await saveLinks(device, s);
-        return { ...(await sessionCard(device, s)), lines: ['✓ Links sent to Telegram', s.title] };
+        return { ...(await sessionCard(device, s)), lines: ['Links sent to Telegram', s.title] };
       }
       return sessionCard(device, s);
     }
@@ -83,7 +89,7 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
       if (action !== 'tap') return infoCard('Claim later', 'it stays available');
       const s = await getSession(ref.id);
       await claimPresence(device, s);
-      return { kind: 'presence', lines: ['✓ Presence claimed', s.title, 'signed record sent to Telegram'] };
+      return { kind: 'presence', lines: ['Presence claimed', s.title, 'signed record sent to Telegram'] };
     }
     case 'handoff': {
       const h = await liveHandoff(ref.id);
@@ -91,24 +97,24 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
       if (action === 'double') return infoCard('Ignored');
       if (h.kind === 'link') {
         await saveLink(device, h);
-        return infoCard('✓ Saved to Telegram', h.payload.title);
+        return infoCard('Saved to Telegram', h.payload.title);
       }
       if (h.kind === 'connect') {
         await connect(device, h);
-        return infoCard(`✓ Connected with ${h.payload.name}`, 'both of you got a message');
+        return infoCard(`Connected with ${h.payload.name}`, 'both of you got a message');
       }
       await sendPayLink(device, h);
-      return infoCard('✓ Payment link sent', 'confirm it in your wallet', 'on your phone');
+      return infoCard('Payment link sent', 'confirm it in your wallet', 'on your phone');
     }
     case 'marker': {
       const m = await liveMarker(ref.id);
       if (!m) return errorCard('Marker expired');
       if (action === 'tap') {
         await saveMarket(device, m.market_id);
-        return infoCard('✓ Market saved to Telegram');
+        return infoCard('Market saved to Telegram');
       }
       const market = await paperYes(device, m.market_id);
-      return infoCard(`✓ Paper YES at ${Math.round(market.yes * 100)}%`, 'no real money · see /paper');
+      return infoCard(`Paper YES at ${Math.round(market.yes * 100)}%`, 'no real money · see /paper');
     }
     default:
       throw new HttpError(400, 'unknown ref type');

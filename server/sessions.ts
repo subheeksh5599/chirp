@@ -195,12 +195,12 @@ export async function sessionCard(device: Device, s: Session): Promise<Card> {
   const ref = { type: 'session' as const, id: s.id };
   if (s.ended_at) {
     const p = await presenceStatus(device.id, s);
-    if (p.claimedId) return { kind: 'presence', ref: { type: 'presence', id: s.id }, lines: [`✓ Presence claimed`, s.title, 'record is in your Telegram'] };
+    if (p.claimedId) return { kind: 'presence', ref: { type: 'presence', id: s.id }, lines: [`Presence claimed`, s.title, 'record is in your Telegram'] };
     if (p.ok) {
       return {
         kind: 'presence',
         ref: { type: 'presence', id: s.id },
-        lines: [`✓ You were here · ${Math.round(p.spanMinutes)} min`, s.title, `${p.codes} room codes heard`],
+        lines: [`You were here · ${Math.round(p.spanMinutes)} min`, s.title, `${p.codes} room codes heard`],
         tap: 'claim',
       };
     }
@@ -229,7 +229,7 @@ export function roomCard(s: Session): Card {
   const slide = s.slides[i];
   const header = `${s.title} · ${i + 1}/${s.slides.length}`;
   const fresh = s.caption && s.caption_at && Date.now() - Date.parse(s.caption_at) < 20_000;
-  const caption = fresh ? wrap(`“${s.caption}”`, 40, 1) : [];
+  const caption = fresh ? wrap(`"${s.caption}"`, 40, 1) : [];
   if (slide.poll) {
     return {
       kind: 'poll', ref, live: true,
