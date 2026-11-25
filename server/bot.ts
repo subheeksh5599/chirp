@@ -74,7 +74,7 @@ async function paper(userId: number) {
   ].join('\n');
 }
 
-async function checkAnchor(presenceId: string) {
+export async function checkAnchor(presenceId: string) {
   const p = await one<{ id: string; anchor_tx: string | null }>(`SELECT id, anchor_tx FROM $S.presence WHERE id = $1`, [presenceId]);
   if (!p) return 'Record not found.';
   if (p.anchor_tx) return `Already anchored: ${explorerTx(p.anchor_tx)}`;
