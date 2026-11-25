@@ -99,7 +99,13 @@ async function main() {
       }
       return;
     }
-    const type = event.textEvent ? (event.textEvent.eventType ?? OsEventTypeList.CLICK_EVENT) : event.sysEvent?.eventType;
+    if (import.meta.env.DEV) console.log(`[chirp] event ${JSON.stringify({ text: event.textEvent, sys: event.sysEvent, list: event.listEvent })}`);
+    // A single press arrives with eventType 0, which the SDK normalises to undefined.
+    const type = event.textEvent
+      ? (event.textEvent.eventType ?? OsEventTypeList.CLICK_EVENT)
+      : event.sysEvent
+        ? (event.sysEvent.eventType ?? (event.sysEvent.eventSource !== undefined ? OsEventTypeList.CLICK_EVENT : undefined))
+        : undefined;
     const map: Partial<Record<number, Input>> = {
       [OsEventTypeList.CLICK_EVENT]: 'tap',
       [OsEventTypeList.DOUBLE_CLICK_EVENT]: 'double',
@@ -108,7 +114,10 @@ async function main() {
       [OsEventTypeList.LONG_PRESS_RELEASE_EVENT]: 'hold',
     };
     const input = type === undefined ? undefined : map[type];
-    if (input) await c.onInput(input);
+    if (input) {
+      console.log(`[chirp] input ${input}`);
+      await c.onInput(input);
+    }
   });
 
   await c.start();
