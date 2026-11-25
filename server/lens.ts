@@ -1,0 +1,62 @@
+// What the glasses show. The server decides the words; the glasses only lay them out.
+export type Ref = { type: 'session' | 'presence' | 'handoff' | 'marker'; id: string };
+
+export type Card = {
+  kind: 'slide' | 'poll' | 'presence' | 'connect' | 'pay' | 'market' | 'info' | 'error';
+  ref?: Ref;
+  lines: string[];
+  /** Label for one tap; absent means tap does nothing on this card. */
+  tap?: string;
+  /** Label for a double tap. */
+  double?: string;
+  /** While true, the glasses keep this card fresh by polling the session state. */
+  live?: boolean;
+};
+
+export const LENS_COLS = 40;
+export const MAX_LINES = 5;
+
+/** Word-wrap to the lens width, hard-cutting words longer than a line. */
+export function wrap(text: string, cols = LENS_COLS, maxLines = 2): string[] {
+  const words = text.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+  const lines: string[] = [];
+  let cur = '';
+  for (let w of words) {
+    while (w.length > cols) {
+      if (cur) {
+        lines.push(cur);
+        cur = '';
+      }
+      lines.push(w.slice(0, cols));
+      w = w.slice(cols);
+    }
+    if (!cur) cur = w;
+    else if (cur.length + 1 + w.length <= cols) cur += ` ${w}`;
+    else {
+      lines.push(cur);
+      cur = w;
+    }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) {
+    const kept = lines.slice(0, maxLines);
+    const last = kept[maxLines - 1];
+    kept[maxLines - 1] = last.length >= cols ? `${last.slice(0, cols - 1)}…` : `${last}…`;
+    return kept;
+  }
+  return lines;
+}
+
+export const clip = (s: string, n = LENS_COLS) => (s.length <= n ? s : `${s.slice(0, n - 1)}…`);
+
+/** Final lens text: content lines plus one hint line. */
+export function render(card: Card): string {
+  const body = card.lines.slice(0, MAX_LINES).map((l) => clip(l));
+  const hints = [card.tap && `tap: ${card.tap}`, card.double && `2×tap: ${card.double}`, 'swipe: back']
+    .filter(Boolean)
+    .join(' · ');
+  return [...body, '', clip(hints, LENS_COLS + 12)].join('\n');
+}
+
+export const errorCard = (...lines: string[]): Card => ({ kind: 'error', lines });
+export const infoCard = (...lines: string[]): Card => ({ kind: 'info', lines });
