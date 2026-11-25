@@ -4,10 +4,10 @@ import { HttpError } from './env.js';
 const GAMMA = 'https://gamma-api.polymarket.com';
 const UA = { 'user-agent': 'Mozilla/5.0 (Chirp)' };
 
-/** Public API calls occasionally reset; retry twice with a short backoff before failing. */
+/** The public API sometimes resets connections for a few seconds; retry with backoff (about 6 s in all) before failing. */
 async function get(url: URL | string): Promise<Response> {
   let last: unknown;
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     try {
       const r = await fetch(url, { headers: UA });
       if (r.status < 500) return r;
@@ -15,7 +15,7 @@ async function get(url: URL | string): Promise<Response> {
     } catch (e) {
       last = e;
     }
-    await new Promise((res) => setTimeout(res, 300 * (i + 1)));
+    await new Promise((res) => setTimeout(res, 400 * (i + 1)));
   }
   throw new HttpError(502, `market data unavailable: ${String((last as Error)?.message ?? last)}`);
 }
