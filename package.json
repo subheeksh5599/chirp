@@ -15,9 +15,16 @@
     "dev:web": "npm run dev -w @chirp/web",
     "dev:glasses": "npm run dev -w @chirp/glasses",
     "build": "npm run build -w @chirp/web && npm run build -w @chirp/glasses",
-    "e2e:room": "node --env-file=.env --import tsx scripts/e2e-room.ts"
+    "e2e:room": "node --env-file=.env --import tsx scripts/e2e-room.ts",
+    "check:whitelist": "node scripts/check-network-whitelist.mjs",
+    "icon": "node scripts/make-icon.mjs",
+    "bench:channels": "node scripts/channel-bench.mjs",
+    "payer": "node --env-file=.env --import tsx scripts/testnet-payer.ts"
   },
   "devDependencies": {
+    "@ton/core": "^0.63.1",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.3.0",
     "@types/node": "^26.6.7",
     "ggwave": "0.4.0",
     "tsx": "^4.23.15",
