@@ -43,13 +43,10 @@ async function heardToday(userId: number) {
 }
 
 async function met(userId: number) {
-  const devices = await devicesOfUser(userId);
-  const rows = devices.length
-    ? await q<{ other_name: string; other_username: string | null; role: string | null; met_at: string }>(
-        `SELECT other_name, other_username, role, met_at FROM $S.contacts WHERE device_id = ANY($1::uuid[]) ORDER BY met_at DESC LIMIT 30`,
-        [devices.map((d) => d.id)],
-      )
-    : [];
+  const rows = await q<{ other_name: string; other_username: string | null; role: string | null; met_at: string }>(
+    `SELECT other_name, other_username, role, met_at FROM $S.contacts WHERE owner_tg_id = $1 ORDER BY met_at DESC LIMIT 30`,
+    [userId],
+  );
   if (!rows.length) return 'No contacts yet.';
   return [
     '<b>People you met</b>',
