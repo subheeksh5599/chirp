@@ -9,11 +9,17 @@
   "scripts": {
     "bench:codec": "node scripts/codec-bench.mjs",
     "test": "vitest run",
-    "typecheck": "tsc -p . && npm run typecheck -w @chirp/glasses -w @chirp/sender"
+    "typecheck": "tsc -p . && npm run typecheck -w @chirp/glasses -w @chirp/web",
+    "setup": "node --env-file=.env --import tsx scripts/setup.ts",
+    "dev:api": "node --env-file=.env --import tsx server/local.ts",
+    "dev:web": "npm run dev -w @chirp/web",
+    "dev:glasses": "npm run dev -w @chirp/glasses",
+    "build": "npm run build -w @chirp/web && npm run build -w @chirp/glasses"
   },
   "devDependencies": {
     "@types/node": "^26.6.7",
     "ggwave": "0.4.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^5.1.1"
   },
