@@ -13,3 +13,4 @@ runbook*.md
 !apps/glasses/.env.production
 *.ehpk
 !.env.example
+.hallmark/

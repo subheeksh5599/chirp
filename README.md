@@ -5,7 +5,7 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/subheeksh5599/chirp/ci.yml?branch=main&label=CI)](https://github.com/subheeksh5599/chirp/actions)
-![Tests](https://img.shields.io/badge/tests-89%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-96%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -32,7 +32,7 @@ The sound only carries a short code. The content lives on the server. And presen
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator, Mac speaker → Mac mic | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
-| Tests | ✅ 89 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 96 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -81,11 +81,11 @@ Every one of those ends in your Telegram chat with the bot, and `/heard` keeps t
 3. The lens switches to **Chirp · listening (glasses mic)**.
 
 **Make something chirp near it:**
-- **A talk:** open the [speaker console](https://chirp-liart-six-38.vercel.app/console.html), paste a few slides (`Poll: Ship weekly? | weekly | monthly` makes a poll), press **Start session**, then **Start chirping**. The lens shows the slide. Press **Next →** and the lens follows. On a poll, tap the glasses to vote and watch the console count it. Press **End session and open claims**, and listeners who stayed long enough see **✓ You were here** and tap to claim.
+- **A talk:** open the [speaker console](https://chirp-liart-six-38.vercel.app/console.html), paste a few slides (`Poll: Ship weekly? | weekly | monthly` makes a poll), press **Start session**, then **Start chirping**. The lens shows the slide. Press **Next** and the lens follows. On a poll, tap the glasses to vote and watch the console count it. Press **End session and open claims**, and listeners who stayed long enough see **✓ You were here** and tap to claim.
 - **A link on a call:** open [Share a link](https://chirp-liart-six-38.vercel.app/link.html), fill in a title and link, press **Chirp it** near the mic. Tap on the glasses and the link arrives in Telegram.
 - **Your card:** in the bot, tap the **Chirp me** menu button and press **Chirp my card**. The other person's lens shows your name; their tap sends both of you a message.
-- **A bill:** open [Counter bill](https://chirp-liart-six-38.vercel.app/shop.html), enter an amount in testnet TON, press **Create bill and chirp**. The wearer taps, confirms in Tonkeeper on their phone, and the counter page flips to **✓ Paid** with the explorer link.
-- **A stream marker:** open [Stream markers](https://chirp-liart-six-38.vercel.app/marker.html), search `bitcoin`, press **Chirp** (or **.wav** to mix into a stream). The lens shows the market with live odds.
+- **A bill:** open [Counter bill](https://chirp-liart-six-38.vercel.app/shop.html), enter an amount in testnet TON, press **Create bill and chirp**. The wearer taps, confirms in Tonkeeper on their phone, and the counter page shows **Paid** and the explorer link.
+- **A stream marker:** open [Stream markers](https://chirp-liart-six-38.vercel.app/marker.html), search `bitcoin`, press **Chirp** (or **Download** to mix it into a stream). The lens shows the market with live odds.
 
 Then send `/heard` to the bot.
 
@@ -154,7 +154,7 @@ Design rules that make it a habit rather than a demo:
 | Piece | What it does |
 |---|---|
 | `apps/glasses` | The glasses app: 16 kHz mic → decoder → server → lens card; taps, ring, swipe, long press; pairing; queue; offline retry; glasses/phone mic switch |
-| `apps/web` | Sender tools: speaker console (slides, polls, auto-chirp, live subtitles, end-and-claim), share-a-link, counter bill, stream markers with WAV export, the Telegram Mini App, a sound test, privacy policy |
+| `apps/web` | Sender tools, each showing the exact lens text the server will send and the chirp's real waveform as it plays: speaker console (slides, polls, auto-chirp, live subtitles, end-and-claim), share-a-link, counter bill, stream markers with WAV export, the Telegram Mini App, a sound test, privacy policy |
 | `server` | One HTTP API plus the Telegram bot: devices and pairing, rotating room codes, presence rule and signed records, hand-offs, markers, paper positions, `/heard`, `/met`, `/paper`, on-chain checks |
 | `packages/wire` | Frame format, Crockford base32 codes, HMAC slot codes, presence rule, deck text format |
 | `packages/sound` | Soft chirp shaping: fades, low-pass, two copies per chirp |
@@ -257,6 +257,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Presence: rule, signed record, public verify route | ✅ | `server/test/server.test.ts` |
 | Presence anchor on TON testnet | ✅ built, ⏳ no anchored record yet | `server/bot.ts` checks the wallet for the comment |
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
+| Sender pages preview exactly what the lens shows | ✅ | `server/test/server.test.ts` (`the console shows the same text a listener gets, slide and poll`) |
 | Bills on TON testnet | ✅ built, ⏳ no paid bill yet | `server/test/server.test.ts` (real testnet lookup) |
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
 | `/heard`, `/met`, `/paper` | ✅ | `server/test/server.test.ts` |
@@ -346,7 +347,7 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 89 tests (server tests use a throwaway schema)
+npm test                      # 96 tests (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
 ```
@@ -357,14 +358,15 @@ The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.en
 
 | Suite | Tests |
 |---|---|
-| `server/test/server.test.ts` | 33 |
+| `server/test/server.test.ts` | 37 |
 | `packages/wire/test/wire.test.ts` | 19 |
 | `packages/wire/test/properties.test.ts` | 13 |
 | `apps/glasses/test/controller.test.ts` | 9 |
 | `packages/sound/test/soften.test.ts` | 7 |
 | `packages/sound/test/sound.test.ts` | 4 |
 | `packages/wire/test/deck.test.ts` | 4 |
-| **Total** | **89** |
+| `apps/web/test/envelope.test.ts` | 3 |
+| **Total** | **96** |
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. Server and controller tests run against the real database in a throwaway schema, and the market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
