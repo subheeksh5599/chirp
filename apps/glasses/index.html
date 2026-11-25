@@ -4,14 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chirp</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; margin: 1.25rem; background: #0b0f0c; color: #e6efe8; }
+      h1 { font-size: 1.2rem; margin: 0 0 0.5rem; color: #6ef0a0; }
+      pre { background: #020503; color: #6ef0a0; padding: 0.9rem; border-radius: 10px; white-space: pre-wrap; min-height: 6rem; }
+      .muted { color: #8ca394; }
+    </style>
   </head>
   <body>
-    <main>
-      <h1>Chirp</h1>
-      <p id="phone-status">Starting…</p>
-      <p>Heard: <span id="heard-count">0</span></p>
-      <ol id="heard-list"></ol>
-    </main>
+    <h1>Chirp</h1>
+    <p id="phone-status" class="muted">Starting…</p>
+    <p class="muted">On your lens:</p>
+    <pre id="phone-lens"></pre>
+    <p class="muted">Chirps heard: <span id="heard-count">0</span></p>
+    <p class="muted">Tap to act · double-tap for the other option · swipe to go back · long press to pause listening.</p>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
