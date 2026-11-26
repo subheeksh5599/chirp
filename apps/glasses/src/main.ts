@@ -94,6 +94,7 @@ async function main() {
   bridge.onEvenHubEvent(async (event) => {
     const audio = event.audioEvent;
     if (audio?.audioPcm) {
+      if (c.recordNote(audio.audioPcm)) return; // a voice note is being recorded, not a chirp
       if (!c.listening) return;
       if (CAPTURE) capBuf.push(audio.audioPcm.slice());
       const got = decoder.push(audio.audioPcm);
@@ -115,6 +116,7 @@ async function main() {
       [OsEventTypeList.DOUBLE_CLICK_EVENT]: 'double',
       [OsEventTypeList.SCROLL_TOP_EVENT]: 'swipe',
       [OsEventTypeList.SCROLL_BOTTOM_EVENT]: 'swipe',
+      [OsEventTypeList.LONG_PRESS_EVENT]: 'hold-start',
       [OsEventTypeList.LONG_PRESS_RELEASE_EVENT]: 'hold',
     };
     const input = type === undefined ? undefined : map[type];

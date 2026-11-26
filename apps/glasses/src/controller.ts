@@ -5,6 +5,8 @@ export type Card = {
   lines: string[];
   tap?: string;
   double?: string;
+  /** Press-and-hold records a voice note for this card. */
+  voice?: string;
   live?: boolean;
 };
 export type CardResponse = { card: Card; text: string };
@@ -16,6 +18,8 @@ export interface Api {
   heard(token: string, frame: string): Promise<CardResponse>;
   act(token: string, ref: Card['ref'], action: 'tap' | 'double'): Promise<CardResponse>;
   sessionState(token: string, sessionId: string): Promise<CardResponse>;
+  /** A spoken note (16 kHz mono WAV, base64) in, a draft card out. */
+  note(token: string, ref: Card['ref'], audio: string): Promise<CardResponse>;
 }
 
 export class ApiError extends Error {
@@ -36,7 +40,34 @@ export interface Deps {
 }
 
 export type MicSource = 'glasses' | 'phone';
-export type Input = 'tap' | 'double' | 'swipe' | 'hold';
+/** `hold-start` is the touchpad going down on a long press; `hold` is its release. */
+export type Input = 'tap' | 'double' | 'swipe' | 'hold-start' | 'hold';
+
+/** The mic delivers 16 kHz mono 16-bit PCM: 32,000 bytes a second. Notes stop at 15 s. */
+export const NOTE_MAX_PCM = 32_000 * 15;
+
+/** Wrap raw 16 kHz mono 16-bit PCM in a WAV header. */
+export function pcmToWav(chunks: Uint8Array[]): Uint8Array {
+  const n = chunks.reduce((a, c) => a + c.byteLength, 0);
+  const out = new Uint8Array(44 + n);
+  const v = new DataView(out.buffer);
+  const tag = (at: number, s: string) => [...s].forEach((ch, i) => v.setUint8(at + i, ch.charCodeAt(0)));
+  tag(0, 'RIFF'); v.setUint32(4, 36 + n, true); tag(8, 'WAVEfmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 16_000, true); v.setUint32(28, 32_000, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true); tag(36, 'data'); v.setUint32(40, n, true);
+  let at = 44;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.byteLength;
+  }
+  return out;
+}
+
+export function toBase64(bytes: Uint8Array): string {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
 
 const TOKEN_KEY = 'chirp-device-token';
 const MIC_KEY = 'mic-source';
@@ -57,6 +88,9 @@ export class Controller {
   offline: string[] = [];
   lastTitle = '';
   heardCount = 0;
+  /** Mic audio collected while the wearer holds the touchpad on a card that takes a voice note. */
+  recording: Uint8Array[] | null = null;
+  private recorded = 0;
   private busy = false;
 
   constructor(private d: Deps) {}
@@ -140,7 +174,7 @@ export class Controller {
     }
     const ref = res.card.ref?.id;
     // Only a card the wearer can still act on holds the lens; a finished result (info) or an error gives way.
-    const showing = this.mode === 'card' && this.card && this.card.card.kind !== 'error' && this.card.card.kind !== 'info';
+    const showing = this.mode === 'card' && this.card && !['error', 'info', 'connected'].includes(this.card.card.kind);
     if (res.card.kind === 'error') {
       if (showing) return; // a bad chirp never covers a good card
       return this.present(res);
@@ -168,6 +202,16 @@ export class Controller {
       if (input === 'double') await this.exit();
       return;
     }
+    if (input === 'hold-start') {
+      const c = this.mode === 'card' ? this.card?.card : undefined;
+      if (!c?.voice || !c.ref) return;
+      if (!this.listening) await this.startMic();
+      this.recording = [];
+      this.recorded = 0;
+      this.d.log(`[chirp] recording ${c.voice}`);
+      return this.d.show(`Recording ${c.voice}\n\nspeak, then let go`);
+    }
+    if (input === 'hold' && this.recording) return this.finishNote();
     if (input === 'hold') {
       this.listening ? await this.stopMic() : await this.startMic();
       return this.mode === 'root' ? this.paintRoot() : this.paint();
@@ -201,6 +245,29 @@ export class Controller {
       this.card = await this.d.api.act(this.token, c.ref, input);
       this.d.log(`[chirp] acted ${input} → ${this.card.card.lines[0] ?? ''}`);
       await this.paint();
+    } catch (e) {
+      await this.showError(e instanceof ApiError ? e.message : 'Could not reach the server', 'try again');
+    }
+  }
+
+  /** Mic audio goes here first; returns true while it is being recorded as a note (so it is not decoded). */
+  recordNote(pcm: Uint8Array): boolean {
+    if (!this.recording) return false;
+    if (this.recorded < NOTE_MAX_PCM) {
+      const part = pcm.subarray(0, NOTE_MAX_PCM - this.recorded);
+      this.recording.push(part.slice());
+      this.recorded += part.byteLength;
+    }
+    return true;
+  }
+
+  private async finishNote() {
+    const chunks = this.recording!;
+    this.recording = null;
+    const ref = this.card?.card.ref;
+    this.d.log(`[chirp] note ${(this.recorded / 32_000).toFixed(1)}s`);
+    try {
+      this.present(await this.d.api.note(this.token, ref, toBase64(pcmToWav(chunks))));
     } catch (e) {
       await this.showError(e instanceof ApiError ? e.message : 'Could not reach the server', 'try again');
     }

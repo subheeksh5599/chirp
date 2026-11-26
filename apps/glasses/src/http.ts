@@ -22,5 +22,6 @@ export function httpApi(base: string): Api {
     heard: (token, frame) => call<CardResponse>('/api/heard', token, { frame }),
     act: (token, ref, action) => call<CardResponse>('/api/act', token, { ref, action }),
     sessionState: (token, id) => call<CardResponse>(`/api/sessions/${id}/state`, token),
+    note: (token, ref, audio) => call<CardResponse>('/api/notes', token, { ref, audio }),
   };
 }

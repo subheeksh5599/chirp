@@ -1,7 +1,8 @@
 // The glasses controller driven against the real server router and database (in-process).
 import { createHmac } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ApiError, Controller, type Api, type CardResponse, type MicSource } from '../src/controller.js';
+import { readFileSync } from 'node:fs';
+import { ApiError, Controller, NOTE_MAX_PCM, type Api, type CardResponse, type MicSource } from '../src/controller.js';
 import { route } from '../../../server/router.js';
 import { migrate, dropSchema } from '../../../server/migrate.js';
 import { setSender, type Outgoing } from '../../../server/notify.js';
@@ -30,6 +31,7 @@ const api: Api = {
   heard: (t, frame) => call<CardResponse>('POST', '/api/heard', t, { frame }),
   act: (t, ref, action) => call<CardResponse>('POST', '/api/act', t, { ref, action }),
   sessionState: (t, id) => call<CardResponse>('GET', `/api/sessions/${id}/state`, t),
+  note: (t, ref, audio) => call<CardResponse>('POST', '/api/notes', t, { ref, audio }),
 };
 
 function rig() {
@@ -153,6 +155,54 @@ describe('glasses controller', () => {
     await r.c.onFrame(second.frame);
     expect(r.lens()).toMatch(/^Ben\n@ben/);
     expect(r.lens()).not.toMatch(/heard · swipe for next/);
+  });
+
+  it('after connecting: hold, say a note, let go, tap, and it reaches their Telegram', async () => {
+    const r = rig();
+    await r.c.start();
+    await pair(r.c);
+    const card = await issueConnect(initDataFor({ id: 8_999_010, first_name: 'Sam', username: 'sam' }));
+    await r.c.onFrame(card.frame);
+    await r.c.onInput('tap');
+    expect(r.lens()).toMatch(/^Connected with Sam[\s\S]*hold: note to Sam · swipe: back$/);
+    await r.c.onInput('hold-start');
+    expect(r.lens()).toMatch(/^Recording note to Sam/);
+    // the glasses mic streams 100 ms chunks while the touchpad is held; real speech from the fixture
+    const pcm = readFileSync(new URL('../../../server/test/fixtures/nice-meeting-you.wav', import.meta.url)).subarray(44);
+    for (let i = 0; i < pcm.length; i += 3200) expect(r.c.recordNote(pcm.subarray(i, i + 3200))).toBe(true);
+    await r.c.onInput('hold');
+    expect(r.c.recording).toBeNull();
+    expect(r.lens()).toMatch(/^To Sam:\n"Nice meeting you/);
+    expect(r.lens()).toMatch(/tap: send · 2×tap: discard/);
+    outbox.length = 0;
+    await r.c.onInput('tap');
+    expect(r.lens()).toMatch(/^Sent to Sam/);
+    expect(outbox.map((m) => String(m.chatId))).toEqual(['8999010']);
+    expect(outbox[0].text).toMatch(/via Chirp:\n[Nn]ice meeting you/);
+  });
+
+  it('holding on a card without a note still pauses listening, and chirps are not recorded', async () => {
+    const r = rig();
+    await r.c.start();
+    await pair(r.c);
+    await r.c.onInput('hold-start');
+    expect(r.c.recording).toBeNull();
+    expect(r.c.recordNote(new Uint8Array(3200))).toBe(false);
+    await r.c.onInput('hold');
+    expect(r.c.listening).toBe(false);
+  });
+
+  it('a note stops collecting audio at 15 seconds', async () => {
+    const r = rig();
+    await r.c.start();
+    await pair(r.c);
+    const card = await issueConnect(initDataFor({ id: 8_999_011, first_name: 'Ada' }));
+    await r.c.onFrame(card.frame);
+    await r.c.onInput('tap');
+    await r.c.onInput('hold-start');
+    for (let i = 0; i < 200; i++) r.c.recordNote(new Uint8Array(3200));
+    const total = r.c.recording!.reduce((a, b) => a + b.byteLength, 0);
+    expect(total).toBe(NOTE_MAX_PCM);
   });
 
   it('a swiped-away room stays quiet but keeps counting presence', async () => {
