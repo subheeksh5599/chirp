@@ -7,7 +7,7 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-119%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-132%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -42,7 +42,7 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator: Mac speaker → Mac mic, and a phone at 30 cm (10/10) and 1 m | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
-| Tests | ✅ 119 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 132 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -153,7 +153,7 @@ $ npm run e2e:room
 
 - **Not a new modem.** Sending data as sound is old (dial-up, payment soundboxes, the open-source codec used here). The new part is using it as the receive channel a camera-less display device is missing, and building presence, broadcast and hand-off on top.
 - **Not ultrasonic.** The glasses deliver 16 kHz audio, so anything above 8 kHz is invisible to them. The chirp is a soft, audible chime between 1.9 and 6.1 kHz.
-- **Not a recorder.** Audio is decoded in memory and dropped. Only the 9-character code leaves the phone.
+- **Not a recorder.** Chirp audio is decoded in memory and dropped; only the 9-character code leaves the device. The one exception is a voice note, which you record yourself by holding the touchpad.
 - **Not a wallet.** Chirp never holds funds or signs. Payments and anchors are testnet transactions the wearer confirms in their own wallet.
 - **Not a feed.** It shows nothing until something in the room speaks to it.
 
@@ -166,7 +166,7 @@ Glasses with a display already do messages, navigation, captions and AI answers.
 | Everyday moment | How often | Who chirps | What the lens shows | One tap does |
 |---|---|---|---|---|
 | **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host, from [Share a link](https://chirp-liart-six-38.vercel.app/link.html), phone near the mic | `Launch thread` / `from Host` | Saves the link to your Telegram |
-| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam` / `founder, Tidepool` / `@samreyes` | Both of you get a message and the contact in `/met` |
+| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam` / `founder, Tidepool` / `@samreyes` | Both of you get a message and the contact in `/met`. Then hold, say "nice meeting you", let go, and tap: it lands in their Telegram |
 | **Class, meetup or talk** ("scan before I change the slide") | Weekly, daily for students | The speaker console | Current slide, live poll, subtitles | Vote, save the deck, claim presence |
 | **Stream or podcast** ("check the market I'm talking about") | Daily for viewers | Mixed into the stream audio | The market with live odds | Save it, or double-tap for a paper position |
 | **Counter or stall** ("scan to pay") | Where crypto is accepted | The counter page | `Cafe Noor` / `0.5 TON · testnet` | Opens the payment in the wearer's wallet |
@@ -185,7 +185,7 @@ Design rules that make it a habit rather than a demo:
 
 | Piece | What it does |
 |---|---|
-| `apps/glasses` | The glasses app: 16 kHz mic → decoder → server → lens card; taps, ring, swipe, long press; pairing; queue; offline retry; glasses/phone mic switch |
+| `apps/glasses` | The glasses app: 16 kHz mic → decoder → server → lens card; taps, ring, swipe, long press, hold-to-speak voice notes; pairing; queue; offline retry; glasses/phone mic switch |
 | `apps/web` | Sender tools, all showing the chirp's real waveform as it plays and, except stream markers, the exact lens text the server will send: speaker console (slides, polls, auto-chirp, live subtitles, end-and-claim), share-a-link, counter bill, stream markers with WAV export, the Telegram Mini App, a sound test, privacy policy |
 | `server` | One HTTP API plus the Telegram bot: devices and pairing, rotating room codes, presence rule and signed records, hand-offs, markers, paper positions, `/heard`, `/met`, `/paper`, on-chain checks |
 | `packages/wire` | Frame format, Crockford base32 codes, HMAC slot codes, presence rule, deck text format |
@@ -289,6 +289,7 @@ sequenceDiagram
 4. **Resolving.** The server matches broadcast codes against every live session's key for the current slot and its neighbours; hand-off and marker codes are looked up and must not be expired.
 5. **Card.** The server writes the words, wrapped to 40 columns, with a hint line (`tap: … · 2×tap: … · swipe: back`). The glasses only lay it out.
 6. **Act.** A tap votes, connects, saves or claims; the bot delivers the result to Telegram.
+7. **Voice note (after connecting).** Holding the touchpad on the `Connected with …` card records up to 15 s from the mic instead of decoding it. On release the clip goes to `/api/notes`, Whisper turns it into a draft on the lens, and a tap sends it to the other person's Telegram with a reply button; a double-tap throws it away.
 
 ## Where each guarantee is enforced
 
@@ -299,6 +300,7 @@ sequenceDiagram
 | One shared code never proves presence | `packages/wire/src/presence.ts` | `one shared code never qualifies`, `one code shared in a chat does not qualify` |
 | Presence records can't be edited | `server/crypto.ts` | `codes spread over the session qualify; a claim is signed and sent to Telegram` |
 | Contact cards come from the real Telegram user | `server/telegram.ts` | `requires valid Telegram initData` |
+| A voice note is sent only on a tap, once, and only by the wearer who made the contact | `server/notes.ts` | `hold, speak, tap: the words are drafted on the lens, then sent to their Telegram`, `only the wearer who made the contact can draft or send to it` |
 | You can't connect with your own card; expired cards fail | `server/handoff.ts` | `your own card and expired cards are refused` |
 | Payments go to the wallet with a unique comment and are only marked paid on-chain | `server/handoff.ts`, `server/ton.ts` | `tap sends a wallet link with a unique comment; unpaid until it is on-chain` |
 | Only devices that heard the room can vote or read it | `server/sessions.ts` | `a device that never heard the room cannot vote or read its state` |
@@ -354,6 +356,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Presence anchor on TON testnet | ✅ record `27VHDCYT`: 6 room codes heard through the air by the simulator, signed, [anchored](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b) | `npm run presence:live`, then `npm run testnet -- anchor <id>`; [`/api/presence/27VHDCYT`](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT) shows `signatureValid: true` |
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
 | Two real Telegram accounts connected by one chirp | ✅ 2026-11-25: account B chirped its card from the Mini App on a phone; the simulator, paired to account A, heard `HBKPBM2ET`, a tap connected them, and both accounts list each other in `/met` (re-run after the fix that saves the contact on the sender's side too) | simulator log: `card connect` → `acted tap → Connected with …` |
+| Voice note after connecting: hold, speak, tap to send | ✅ 2026-11-26: the simulator heard a contact card through the air, a tap connected, holding recorded 4.8 s of speech from the Mac speaker, Whisper returned "Nice meeting you. Let's grab coffee next week." as a draft on the lens, and a tap delivered it to a second real Telegram account (8/8 checks in 2 of 3 back-to-back runs; the third never heard the contact chirp, the known laptop-speaker-into-its-own-mic weakness in [MEASUREMENTS](docs/MEASUREMENTS.md). Every run that got past the chirp passed the voice steps) | `npm run e2e:note`, `server/test/server.test.ts` (`voice note after connecting`), `apps/glasses/test/controller.test.ts` |
 | Sender pages preview exactly what the lens shows | ✅ | `server/test/server.test.ts` (`the console shows the same text a listener gets, slide and poll`) |
 | Bills on TON testnet | ✅ bill `DTJ5NFAM` paid 0.05 TON from a second wallet, [marked paid by production](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028) | `npm run testnet -- bill` |
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
@@ -417,7 +420,7 @@ Checked only when true on a real run.
 
 ## Security and privacy
 
-- Mic audio stays in memory and is dropped after decoding; only 9-character codes leave the phone. Long press pauses listening.
+- Chirp audio stays in memory and is dropped after decoding; only 9-character codes leave the device. Audio is sent only for a voice note, while the wearer holds the touchpad on a "Connected" card (at most 15 s, to Groq Whisper); the clip isn't stored and nothing is sent to the other person until a tap. Elsewhere, long press pauses listening.
 - Device tokens are random, stored hashed (SHA-256); session admin secrets the same.
 - Presence records are ed25519-signed over canonical JSON and name the holder only by a one-way pseudonym.
 - No keys ship in the glasses app; every third-party call goes through the server.
@@ -465,8 +468,9 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 119 tests (server tests use a throwaway schema)
+npm test                      # 132 tests (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
+npm run e2e:note              # contact chirp → connect → hold and speak → draft → tap to send (plays sound and speech)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
 npm run bench:channels        # decode rates through call, stream and podcast codecs (needs ffmpeg)
 npm run check:whitelist       # the glasses build reaches only the manifest's whitelisted origins
