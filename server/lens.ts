@@ -70,9 +70,16 @@ export function lensSafe(text: string): string {
 export function render(card: Card): string {
   const body = card.lines.slice(0, MAX_LINES).map((l) => clip(lensSafe(l)));
   const hints = [card.tap && `tap: ${card.tap}`, card.double && `2×tap: ${card.double}`, card.voice && `hold: ${card.voice}`, 'swipe: back']
-    .filter(Boolean)
-    .join(' · ');
-  return [...body, '', clip(lensSafe(hints), LENS_COLS + 12)].join('\n');
+    .filter((h): h is string => !!h)
+    .map(lensSafe);
+  // Hints that don't fit on one line wrap at a ' · ' boundary rather than losing the last one.
+  const hintLines: string[] = [];
+  for (const h of hints) {
+    const last = hintLines.length - 1;
+    if (last >= 0 && hintLines[last].length + 3 + h.length <= LENS_COLS + 12) hintLines[last] += ` · ${h}`;
+    else hintLines.push(h);
+  }
+  return [...body, '', ...hintLines.slice(0, 2).map((l) => clip(l, LENS_COLS + 12))].join('\n');
 }
 
 export const errorCard = (...lines: string[]): Card => ({ kind: 'error', lines });
