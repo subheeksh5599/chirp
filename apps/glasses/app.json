@@ -8,18 +8,18 @@
   "permissions": [
     {
       "name": "network",
-      "desc": "Sends decoded Chirp codes to the Chirp server and receives the card to show. No audio is sent.",
+      "desc": "Sends decoded Chirp codes to the Chirp server and receives the card to show. Audio is sent only for a voice note, while you hold the touchpad.",
       "whitelist": [
         "https://chirp-liart-six-38.vercel.app"
       ]
     },
     {
       "name": "g2-microphone",
-      "desc": "Listens for short Chirp tones from nearby phones, laptops and speakers. Audio is decoded in memory and never recorded or uploaded."
+      "desc": "Listens for short Chirp tones from nearby phones, laptops and speakers. Chirp audio is decoded in memory and dropped. Only while you hold the touchpad to record a voice note is that clip sent for transcription."
     },
     {
       "name": "phone-microphone",
-      "desc": "Optional: listens for Chirp tones through the phone microphone when the user picks phone listening. Audio is decoded in memory and never recorded or uploaded."
+      "desc": "Optional: listens for Chirp tones through the phone microphone when the user picks phone listening. Chirp audio is decoded in memory and dropped; a voice note you hold to record is sent for transcription."
     }
   ],
   "supported_languages": [

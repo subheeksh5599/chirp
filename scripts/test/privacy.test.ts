@@ -36,4 +36,9 @@ describe('privacy policy', () => {
     };
     for (const p of manifest.permissions) expect(privacy, `nothing covers ${p.name}`).toMatch(covers[p.name]);
   });
+
+  it('says when audio leaves the device: only a held voice note, never chirp audio', () => {
+    expect(privacy).toMatch(/Audio leaves the device only when you hold the touchpad/);
+    for (const p of manifest.permissions) expect(p.desc).not.toMatch(/never recorded or uploaded|No audio is sent/);
+  });
 });
