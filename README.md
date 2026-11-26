@@ -501,19 +501,20 @@ The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.en
 
 | Suite | Tests |
 |---|---|
-| `server/test/server.test.ts` | 43 |
+| `server/test/server.test.ts` | 52 |
 | `packages/wire/test/wire.test.ts` | 19 |
+| `apps/glasses/test/controller.test.ts` | 13 |
 | `packages/wire/test/properties.test.ts` | 13 |
-| `apps/glasses/test/controller.test.ts` | 10 |
 | `packages/sound/test/soften.test.ts` | 7 |
 | `scripts/test/whitelist.test.ts` | 5 |
 | `apps/glasses/test/dedupe.test.ts` | 4 |
 | `scripts/test/icon.test.ts` | 4 |
+| `scripts/test/privacy.test.ts` | 4 |
 | `packages/sound/test/sound.test.ts` | 4 |
 | `packages/wire/test/deck.test.ts` | 4 |
-| `scripts/test/privacy.test.ts` | 3 |
 | `apps/web/test/envelope.test.ts` | 3 |
-| **Total** | **119** |
+| `apps/glasses/test/wav.test.ts` | 2 |
+| **Total** | **134** |
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. Server and controller tests run against the real database in a throwaway schema, and the market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
