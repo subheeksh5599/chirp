@@ -76,8 +76,12 @@ async function main() {
   const api = httpApi(API_BASE);
   // The bot's name comes from the server, which reads it from its own Telegram token.
   const bot = await api.config!().then((r) => `@${r.bot}`).catch(() => 'the Chirp bot');
+  // 'g2' on real glasses; the simulator reports no device. Sent with each hearing so a real-G2 decode is visible in /api/hearing.
+  const model = await bridge.getDeviceInfo().then((d) => d?.model ?? 'none').catch(() => 'none');
+  console.log(`[chirp] device model=${model}`);
   const c = new Controller({
     api,
+    model,
     show,
     setMic: async (on, source) => {
       await bridge.audioControl(false);

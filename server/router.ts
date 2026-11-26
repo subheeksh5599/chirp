@@ -3,7 +3,7 @@ import { botUsername } from './telegram.js';
 import { HttpError, env } from './env.js';
 import { render, type Card } from './lens.js';
 import { createDevice, deviceFromAuth } from './devices.js';
-import { act, heard, sessionState } from './app.js';
+import { act, heard, hearingTally, sessionState, type Hearing } from './app.js';
 import { draftNote } from './notes.js';
 import {
   adminSession,
@@ -46,7 +46,9 @@ const routes: Array<[string, RegExp, Handler]> = [
     const d = await deviceFromAuth(r.headers.authorization);
     return ok({ paired: !!d.tg_user_id, name: d.tg_name, username: d.tg_username, pairCode: d.pair_code });
   }],
-  ['POST', /^\/api\/heard$/, async (r) => card(await heard(await deviceFromAuth(r.headers.authorization), r.body.frame))],
+  ['POST', /^\/api\/heard$/, async (r) =>
+    card(await heard(await deviceFromAuth(r.headers.authorization), r.body.frame, Date.now(), (r.body.hw ?? {}) as Hearing))],
+  ['GET', /^\/api\/hearing$/, async () => ({ status: 200, body: await hearingTally() })],
   ['POST', /^\/api\/act$/, async (r) =>
     card(await act(await deviceFromAuth(r.headers.authorization), r.body.ref as never, r.body.action))],
 

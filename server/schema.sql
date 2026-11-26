@@ -148,3 +148,7 @@ CREATE TABLE IF NOT EXISTS $S.notes (
   created_at timestamptz NOT NULL DEFAULT now(),
   sent_at timestamptz
 );
+
+-- v6: which hardware heard each chirp (as reported by the Even Hub SDK), so a first real-G2 hearing is visible
+ALTER TABLE $S.resolves ADD COLUMN IF NOT EXISTS model text;
+ALTER TABLE $S.resolves ADD COLUMN IF NOT EXISTS mic text;

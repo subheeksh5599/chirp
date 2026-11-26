@@ -19,7 +19,7 @@ export function httpApi(base: string): Api {
     config: () => call<{ bot: string }>('/api/config'),
     createDevice: () => call('/api/devices', undefined, {}),
     me: (token) => call('/api/devices/me', token),
-    heard: (token, frame) => call<CardResponse>('/api/heard', token, { frame }),
+    heard: (token, frame, hw) => call<CardResponse>('/api/heard', token, { frame, hw }),
     act: (token, ref, action) => call<CardResponse>('/api/act', token, { ref, action }),
     sessionState: (token, id) => call<CardResponse>(`/api/sessions/${id}/state`, token),
     note: (token, ref, audio) => call<CardResponse>('/api/notes', token, { ref, audio }),

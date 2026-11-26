@@ -26,7 +26,13 @@ export const SOUND_TEST_CODE = 'TEST0000';
 
 export type Outcome = 'ok' | 'sound-test' | 'not-a-code' | 'room-code-rejected' | 'card-expired' | 'marker-expired';
 
-export async function heard(device: Device, text: unknown, nowMs = Date.now()): Promise<Card> {
+/** What the glasses app reports about the hardware that heard a chirp. Anything else is stored as 'unknown'. */
+export type Hearing = { model?: unknown; mic?: unknown };
+const MODELS = ['g1', 'g2', 'none'];
+const MICS = ['glasses', 'phone'];
+const pick = (v: unknown, allowed: string[]) => (typeof v === 'string' && allowed.includes(v) ? v : 'unknown');
+
+export async function heard(device: Device, text: unknown, nowMs = Date.now(), hw: Hearing = {}): Promise<Card> {
   if (!device.tg_user_id) return errorCard('Not paired yet', 'open the Chirp bot in Telegram', 'and send your pairing code');
   if (typeof text !== 'string') throw new HttpError(400, 'frame text is required');
   const recent = await one<{ n: number }>(
@@ -35,7 +41,13 @@ export async function heard(device: Device, text: unknown, nowMs = Date.now()): 
   );
   if ((recent?.n ?? 0) >= RESOLVES_PER_MINUTE) throw new HttpError(429, 'too many chirps from this device; wait a minute');
   const [card, outcome] = await resolve(device, text, nowMs);
-  await q(`INSERT INTO $S.resolves (device_id, frame, outcome) VALUES ($1, $2, $3)`, [device.id, text.slice(0, 32), outcome]);
+  await q(`INSERT INTO $S.resolves (device_id, frame, outcome, model, mic) VALUES ($1, $2, $3, $4, $5)`, [
+    device.id,
+    text.slice(0, 32),
+    outcome,
+    pick(hw.model, MODELS),
+    pick(hw.mic, MICS),
+  ]);
   return card;
 }
 
@@ -119,4 +131,18 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
     default:
       throw new HttpError(400, 'unknown ref type');
   }
+}
+
+/** Public, anonymous tally of chirps heard, by hardware and mic: the first real-G2 hearing shows up here. */
+export async function hearingTally() {
+  const rows = await q<{ model: string; mic: string; heard: number; decoded: number; first_at: string; last_at: string }>(
+    `SELECT coalesce(model, 'unknown') AS model, coalesce(mic, 'unknown') AS mic, count(*)::int AS heard,
+            count(*) FILTER (WHERE outcome IN ('ok', 'sound-test'))::int AS decoded,
+            min(at) AS first_at, max(at) AS last_at
+       FROM $S.resolves GROUP BY 1, 2 ORDER BY 1, 2`,
+  );
+  return {
+    note: 'model is what the Even Hub SDK reports (g2 = real glasses; none = the simulator, which has no device). decoded = chirps that resolved to a Chirp card or the sound test.',
+    rows,
+  };
 }

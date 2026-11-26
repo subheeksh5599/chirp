@@ -15,7 +15,8 @@ export interface Api {
   config?(): Promise<{ bot: string }>;
   createDevice(): Promise<{ deviceId: string; token: string; pairCode: string }>;
   me(token: string): Promise<{ paired: boolean; name: string | null; pairCode: string | null }>;
-  heard(token: string, frame: string): Promise<CardResponse>;
+  /** `hw` says which hardware heard it: the SDK's device model and which mic was listening. */
+  heard(token: string, frame: string, hw?: { model: string; mic: MicSource }): Promise<CardResponse>;
   act(token: string, ref: Card['ref'], action: 'tap' | 'double'): Promise<CardResponse>;
   sessionState(token: string, sessionId: string): Promise<CardResponse>;
   /** A spoken note (16 kHz mono WAV, base64) in, a draft card out. */
@@ -37,6 +38,8 @@ export interface Deps {
   setItem(key: string, value: string): Promise<unknown>;
   log(msg: string): void;
   botName: string;
+  /** The device model the Even Hub SDK reports ('g2' on real glasses); absent in the simulator. */
+  model?: string;
 }
 
 export type MicSource = 'glasses' | 'phone';
@@ -166,7 +169,7 @@ export class Controller {
     let res: CardResponse;
     try {
       // Always report: repeated room codes are what prove presence, even while another card is up.
-      res = await this.d.api.heard(this.token, frame);
+      res = await this.d.api.heard(this.token, frame, { model: this.d.model ?? 'none', mic: this.source });
     } catch (e) {
       if (e instanceof ApiError && e.status < 500) return this.showError(e.message);
       if (this.offline.length < MAX_PENDING) this.offline.push(frame);
