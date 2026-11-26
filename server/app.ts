@@ -142,7 +142,7 @@ export async function hearingTally() {
        FROM $S.resolves GROUP BY 1, 2 ORDER BY 1, 2`,
   );
   return {
-    note: 'model is what the Even Hub SDK reports (g2 = real glasses; none = the simulator, which has no device). decoded = chirps that resolved to a Chirp card or the sound test.',
+    note: 'model is what the Even Hub SDK reports (g2 = real glasses; none = the simulator, which has no device). decoded = chirps that resolved to a Chirp card or the sound test. unknown = hearings from before hardware tracking started (2026-11-27).',
     rows,
   };
 }

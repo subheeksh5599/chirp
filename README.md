@@ -377,7 +377,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
 | `/heard`, `/met`, `/paper` | ✅ | `server/test/server.test.ts` |
 | Packs to `.ehpk` | ✅ | `npm run pack -w @chirp/glasses` |
-| Real glasses microphone | ⏳ not tested | no device. `/api/hearing` counts decodes by SDK model (`g2` vs `none` for the simulator) and mic; it shows no `g2` rows yet. Phone-mic fallback built (swipe on the root screen) |
+| Real glasses microphone | ⏳ not tested | no device. `/api/hearing` counts decodes by SDK model (`g2` vs `none` for the simulator) and mic; it has no `g2` row yet. Phone-mic fallback built (swipe on the root screen) |
 | Through call, stream and podcast codecs | ✅ 20/20 clean on every modern codec; 12/20 on 16 kbps Opus with room noise; 0/20 on an 8 kHz phone line | `npm run bench:channels`, [MEASUREMENTS §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline) |
 | Phone as sender | ✅ 10 of 10 at 30 cm; 7 heard at 1 m (presses not counted) · ⏳ 3–5 m | [MEASUREMENTS §4c](docs/MEASUREMENTS.md#4c-a-phone-as-the-sender) |
 | Live call with the app's noise suppression | ⏳ not measured | needs two accounts on a call |
@@ -506,7 +506,7 @@ Chirp has not run on real G2 glasses yet. If you have a pair, this settles it:
 2. On another phone at half volume, open the [sound test](https://chirp-liart-six-38.vercel.app/test.html) and press play about 30 cm from the glasses, 10 times, a few seconds apart.
 3. The lens shows **Sound test heard** each time it decodes. If it doesn't, swipe on the root screen to switch to the phone mic and repeat.
 
-Every hearing is recorded with the device model the Even Hub SDK reports and the mic that heard it, so the result is public without trusting anyone's word: [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing) lists heard vs. decoded counts per model and mic. A `g2 / glasses` row with decodes is the proof; today it has only simulator (`none`) rows.
+Every hearing is recorded with the device model the Even Hub SDK reports and the mic that heard it, so the result is public without trusting anyone's word: [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing) lists heard vs. decoded counts per model and mic. A `g2 / glasses` row with decodes is the proof. There is none yet: the 41 hearings from before tracking started show as `unknown`, and simulator runs since then show as `none`.
 
 ## Tests
 
