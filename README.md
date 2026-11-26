@@ -7,7 +7,7 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-132%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-134%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -18,7 +18,9 @@
 
 <p align="center"><a href="https://youtu.be/qwdeAFHoWMI"><img src="https://img.youtube.com/vi/qwdeAFHoWMI/maxresdefault.jpg" width="720" alt="Chirp demo video, 1 minute: a phone chirps a bill, the glasses show it, one tap sends it to Telegram"></a><br><sub>▶ <a href="https://youtu.be/qwdeAFHoWMI">Watch the 1-minute demo</a> (simulator and phone, recorded live)</sub></p>
 
-Display glasses can show you things and hear you, but they can't see. No camera, no NFC, and apps get no Bluetooth scanning, so every "scan this", "the link is in the chat" and "what's your Telegram?" still needs the phone to come out. **Chirp makes the microphone the glasses' way to receive from the world.** A phone, a laptop, a PA system or a stream plays a short, soft chirp that carries a 9-character code. The glasses hear it, the server turns the code into a card, and the lens shows it. One tap acts on it, and the result lands in Telegram.
+"Scan the QR before I change the slide." Half the room misses it, the back rows can't reach it, and glasses can't scan at all: they have no camera, no NFC, and apps get no Bluetooth scanning.
+
+**Chirp makes the microphone the glasses' way to receive from the world.** A speaker's laptop, a phone, a PA system or a stream plays a short, soft chirp that carries a 9-character code. Every pair of glasses in earshot hears it, the server turns the code into a card, and the lens shows it. One tap acts on it, and the result lands in Telegram. **One sender, a whole room of listeners, and nobody in the audience does anything but look.**
 
 Chirp targets **Even Realities G2** glasses. Their apps are web pages that run inside the Even Hub app on the paired phone; `.ehpk` is that platform's app package.
 
@@ -42,16 +44,16 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator: Mac speaker → Mac mic, and a phone at 30 cm (10/10) and 1 m | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet; the phone-mic fallback is built in |
-| Tests | ✅ 132 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 134 passing in CI | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
 Everyone building for glasses builds a feed: your messages, your prices, your inbox, on your lens. The glasses still can't take anything **in** from the room you're standing in. Chirp gives them that, with the one sense they have.
 
-- **Hand-off.** Someone's phone chirps their card, and one tap connects you on Telegram. A host chirps a link on a voice call. A counter chirps a bill.
-- **Broadcast.** A speaker's laptop chirps every 20 seconds. Every lens in the room follows the current slide, votes in live polls with a tap, and reads live subtitles.
+- **Broadcast.** A speaker's laptop chirps every 20 seconds. Every lens in the room follows the current slide, votes in live polls with a tap, and reads live subtitles. Only the speaker sets anything up.
 - **Presence.** The room's code changes every 5 seconds. Hearing at least 3 of them across 10 minutes (the defaults) earns a signed presence record you can anchor on TON testnet.
 - **Sync.** A stream host marks the market they're talking about. Viewers' lenses show it with live odds, and a double-tap opens a paper position.
+- **Hand-off.** A host chirps a link on a voice call. A counter chirps a bill. Someone you meet chirps their card from Telegram, one tap connects you, and you can hold and say a note that lands in their chat.
 
 Every one of those ends in your Telegram chat with the bot, and `/heard` keeps the day's list.
 
@@ -161,14 +163,24 @@ $ npm run e2e:room
 
 Glasses with a display already do messages, navigation, captions and AI answers. What they can't do is the most common hand-off in daily life: something near you wants to give you something. A QR code needs a camera. NFC needs a reader. Bluetooth discovery isn't exposed to apps. So the phone comes out, every time, which is the thing the glasses were supposed to stop.
 
+## What the other person has to do
+
+| Moment | Sender | Everyone listening |
+|---|---|---|
+| Talk, class, meetup, stream | The speaker opens the console once | Nothing. Their glasses hear the room |
+| Link on a call, bill at a counter | The host or shop opens one page | Nothing |
+| Meeting someone | They open the bot in the Telegram they already have and tap **Chirp my card**. Send them [t.me/Chirp567_bot?start=me](https://t.me/Chirp567_bot?start=me) and the reply is that one button | Nothing |
+
+The contact swap is the one flow where the person without glasses does something, and it stays inside Telegram: no app to install, no website to find. The first time costs one link. After that it's built in. The "you met" message carries a **Chirp my card to someone** button, the bot's menu button is always next to the message box, and the Mini App offers a home-screen icon after the first chirp. Broadcast is where Chirp has no substitute: one laptop reaches every lens in the room, and nobody in the audience touches anything.
+
 ## Why it's useful every day
 
 | Everyday moment | How often | Who chirps | What the lens shows | One tap does |
 |---|---|---|---|---|
-| **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host, from [Share a link](https://chirp-liart-six-38.vercel.app/link.html), phone near the mic | `Launch thread` / `from Host` | Saves the link to your Telegram |
-| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam` / `founder, Tidepool` / `@samreyes` | Both of you get a message and the contact in `/met`. Then hold, say "nice meeting you", let go, and tap: it lands in their Telegram |
 | **Class, meetup or talk** ("scan before I change the slide") | Weekly, daily for students | The speaker console | Current slide, live poll, subtitles | Vote, save the deck, claim presence |
 | **Stream or podcast** ("check the market I'm talking about") | Daily for viewers | Mixed into the stream audio | The market with live odds | Save it, or double-tap for a paper position |
+| **Group voice chat or call** ("link's in the chat") | Daily for community members and remote teams | The host, from [Share a link](https://chirp-liart-six-38.vercel.app/link.html), phone near the mic | `Launch thread` / `from Host` | Saves the link to your Telegram |
+| **Meeting someone** ("what's your Telegram?") | Several times a week | Their phone, from the **Chirp me** Mini App | `Sam` / `founder, Tidepool` / `@samreyes` | Both of you get a message and the contact in `/met`. Then hold, say "nice meeting you", let go, and tap: it lands in their Telegram |
 | **Counter or stall** ("scan to pay") | Where crypto is accepted | The counter page | `Cafe Noor` / `0.5 TON · testnet` | Opens the payment in the wearer's wallet |
 | **Arriving somewhere** (Wi-Fi, menu) | Daily in offices and venues | A screen or speaker | `Office Wi-Fi` / `network Studio5 …` | Sends the details to Telegram |
 
@@ -357,6 +369,8 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
 | Two real Telegram accounts connected by one chirp | ✅ 2026-11-25: account B chirped its card from the Mini App on a phone; the simulator, paired to account A, heard `HBKPBM2ET`, a tap connected them, and both accounts list each other in `/met` (re-run after the fix that saves the contact on the sender's side too) | simulator log: `card connect` → `acted tap → Connected with …` |
 | Voice note after connecting: hold, speak, tap to send | ✅ 2026-11-26: the simulator heard a contact card through the air, a tap connected, holding recorded 4.8 s of speech from the Mac speaker, Whisper returned "Nice meeting you. Let's grab coffee next week." as a draft on the lens, and a tap delivered it to a second real Telegram account (8/8 checks in 2 of 3 back-to-back runs; the third never heard the contact chirp, the known laptop-speaker-into-its-own-mic weakness in [MEASUREMENTS](docs/MEASUREMENTS.md). Every run that got past the chirp passed the voice steps) | `npm run e2e:note`, `server/test/server.test.ts` (`voice note after connecting`), `apps/glasses/test/controller.test.ts` |
+| Share link `t.me/Chirp567_bot?start=me` answers with one **Chirp my card** button; the "you met" message carries the Mini App button | ✅ | `server/test/server.test.ts` (`the share link (?start=me)…`, `…their next swap is one tap`) |
+| Home-screen icon offered after the first chirp | ⏳ built, not yet tried on a phone | `apps/web/src/mini.ts` (`offerHomeScreen`); shows only where Telegram supports it |
 | Sender pages preview exactly what the lens shows | ✅ | `server/test/server.test.ts` (`the console shows the same text a listener gets, slide and poll`) |
 | Bills on TON testnet | ✅ bill `DTJ5NFAM` paid 0.05 TON from a second wallet, [marked paid by production](https://testnet.tonviewer.com/transaction/aafb1ce339591ee6f2c621bad23b96d5c10202bb324085c11214501e276f1028) | `npm run testnet -- bill` |
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
@@ -468,7 +482,7 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 132 tests (server tests use a throwaway schema)
+npm test                      # 134 tests (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run e2e:note              # contact chirp → connect → hold and speak → draft → tap to send (plays sound and speech)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
