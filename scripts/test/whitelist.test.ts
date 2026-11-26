@@ -1,7 +1,8 @@
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { checkWhitelist } from '../check-network-whitelist.mjs';
 
 const made: string[] = [];
@@ -19,6 +20,12 @@ function fixture(bundle: string, whitelist: string[] | null) {
 afterEach(() => made.splice(0).forEach((d) => rmSync(d, { recursive: true, force: true })));
 
 describe('network whitelist check', () => {
+  // Check the build this commit produces, not whatever dist/ a previous run left behind (or none, on a fresh clone).
+  beforeAll(() => {
+    // vitest sets NODE_ENV=test, which makes Vite emit a dev-flavoured bundle; check the production one.
+    execFileSync('npm', ['run', 'build', '-w', '@chirp/glasses'], { stdio: 'ignore', env: { ...process.env, NODE_ENV: 'production' } });
+  }, 120_000);
+
   it('the real glasses build calls only whitelisted origins, and uses every one', () => {
     const r = checkWhitelist('apps/glasses');
     expect(r.problems).toEqual([]);

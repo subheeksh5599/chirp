@@ -5,7 +5,7 @@ import { migrate, dropSchema } from '../migrate.js';
 import { one, q } from '../db.js';
 import { setSender, type Outgoing } from '../notify.js';
 import { createDevice, deviceFromAuth, type Device } from '../devices.js';
-import { act, heard, sessionState, RESOLVES_PER_MINUTE } from '../app.js';
+import { act, heard, hearingTally, sessionState, RESOLVES_PER_MINUTE } from '../app.js';
 import { createSession, currentFrame, endSession, getSession, setSlide, tally, adminSession } from '../sessions.js';
 import { checkPayment, issueBill, issueConnect, issueLink } from '../handoff.js';
 import { createMarker, paperPositions } from '../markers.js';
@@ -366,6 +366,43 @@ describe('sender previews match the lens exactly', () => {
   });
 });
 
+describe('which hardware heard a chirp (the real-G2 evidence trail)', () => {
+  it('records the model and mic the glasses report, and cleans up anything else', async () => {
+    const { device } = await pairedDevice('Gee', 'gee');
+    await heard(device, 'HTEST0000', Date.now(), { model: 'g2', mic: 'glasses' });
+    await heard(device, 'HTEST0000', Date.now(), { model: 'g2', mic: 'phone' });
+    await heard(device, 'HTEST0000', Date.now(), { model: '<script>', mic: 42 });
+    await heard(device, 'HTEST0000');
+    const rows = await q<{ model: string; mic: string; outcome: string }>(
+      `SELECT model, mic, outcome FROM $S.resolves WHERE device_id = $1 ORDER BY at`,
+      [device.id],
+    );
+    expect(rows.map((r) => `${r.model}/${r.mic}/${r.outcome}`)).toEqual([
+      'g2/glasses/sound-test',
+      'g2/phone/sound-test',
+      'unknown/unknown/sound-test',
+      'unknown/unknown/sound-test',
+    ]);
+  });
+
+  it('the public tally counts decodes by hardware, with no device or account in it', async () => {
+    const { device } = await pairedDevice('Gee', 'gee2');
+    await heard(device, 'HTEST0000', Date.now(), { model: 'g2', mic: 'glasses' });
+    await heard(device, 'not a frame', Date.now(), { model: 'g2', mic: 'glasses' });
+    const t = await hearingTally();
+    const g2 = t.rows.find((r) => r.model === 'g2' && r.mic === 'glasses')!;
+    expect(g2.heard).toBeGreaterThanOrEqual(2);
+    expect(g2.decoded).toBeGreaterThanOrEqual(1);
+    expect(g2.decoded).toBeLessThan(g2.heard);
+    expect(JSON.stringify(t)).not.toMatch(new RegExp(device.id));
+    const r = await route({ method: 'GET', path: '/api/hearing', query: new URLSearchParams(), headers: {}, body: {} });
+    expect(r.status).toBe(200);
+  });
+});
+
+/** These send real speech to Whisper, so they need GROQ_API_KEY; everything else runs with nothing configured. */
+const withSpeech = it.runIf(!!process.env.GROQ_API_KEY);
+
 describe('voice note after connecting (real speech-to-text)', () => {
   const speech = readFileSync(new URL('./fixtures/nice-meeting-you.wav', import.meta.url)).toString('base64');
   async function connected() {
@@ -382,7 +419,7 @@ describe('voice note after connecting (real speech-to-text)', () => {
     expect(render(done)).toMatch(/hold: note to Sam · swipe: back$/);
   });
 
-  it('hold, speak, tap: the words are drafted on the lens, then sent to their Telegram', async () => {
+  withSpeech('hold, speak, tap: the words are drafted on the lens, then sent to their Telegram', async () => {
     const { wearer, sam, done } = await connected();
     const draft = await draftNote(wearer.device, done.ref, speech);
     expect(draft).toMatchObject({ kind: 'draft', tap: 'send', double: 'discard' });
@@ -398,7 +435,7 @@ describe('voice note after connecting (real speech-to-text)', () => {
     expect(sentTo(sam.id).filter((m) => /via Chirp/.test(m.text))).toHaveLength(1);
   });
 
-  it('double-tap discards the draft and nothing is sent', async () => {
+  withSpeech('double-tap discards the draft and nothing is sent', async () => {
     const { wearer, sam, done } = await connected();
     const draft = await draftNote(wearer.device, done.ref, speech);
     expect((await act(wearer.device, draft.ref, 'double')).lines[0]).toBe('Note discarded');
@@ -413,7 +450,7 @@ describe('voice note after connecting (real speech-to-text)', () => {
     expect(c).toMatchObject({ kind: 'error', lines: ["Didn't catch that", 'hold, speak, then let go'], ref: done.ref, voice: 'note to Sam' });
   });
 
-  it('only the wearer who made the contact can draft or send to it', async () => {
+  withSpeech('only the wearer who made the contact can draft or send to it', async () => {
     const { wearer, done } = await connected();
     const stranger = await pairedDevice('Mallory', 'mallory');
     await expect(draftNote(stranger.device, done.ref, speech)).rejects.toMatchObject({ status: 404 });
@@ -429,7 +466,7 @@ describe('voice note after connecting (real speech-to-text)', () => {
     await expect(draftNote(wearer.device, done.ref, long)).rejects.toMatchObject({ status: 413 });
   });
 
-  it('the route drafts a note for an authorised device', async () => {
+  withSpeech('the route drafts a note for an authorised device', async () => {
     const { wearer, done } = await connected();
     const r = await route({
       method: 'POST', path: '/api/notes', query: new URLSearchParams(),
@@ -526,7 +563,7 @@ describe('router', () => {
     expect((await req('POST', '/api/heard', { frame: 'BABCDEFGH' })).status).toBe(401);
     expect((await req('POST', '/api/telegram', {}, { 'x-telegram-bot-api-secret-token': 'wrong' })).status).toBe(401);
   });
-  it('config reports the bot name read from the real Telegram token', async () => {
+  it.skipIf(!!process.env.CHIRP_LOCAL_BOT)('config reports the bot name read from the real Telegram token', async () => {
     const r = await req('GET', '/api/config');
     expect(r.status).toBe(200);
     expect((r.body as { bot: string }).bot).toMatch(/^[A-Za-z0-9_]{5,}bot$/i);

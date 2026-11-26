@@ -7,7 +7,7 @@ import { route } from '../../../server/router.js';
 import { migrate, dropSchema } from '../../../server/migrate.js';
 import { setSender, type Outgoing } from '../../../server/notify.js';
 import { handleUpdate } from '../../../server/bot.js';
-import { one } from '../../../server/db.js';
+import { one, q } from '../../../server/db.js';
 import { adminSession, createSession, currentFrame, setSlide } from '../../../server/sessions.js';
 import { issueConnect } from '../../../server/handoff.js';
 
@@ -28,7 +28,7 @@ async function call<T>(method: string, path: string, token?: string, body: Recor
 const api: Api = {
   createDevice: () => call('POST', '/api/devices'),
   me: (t) => call('GET', '/api/devices/me', t),
-  heard: (t, frame) => call<CardResponse>('POST', '/api/heard', t, { frame }),
+  heard: (t, frame, hw) => call<CardResponse>('POST', '/api/heard', t, { frame, hw }),
   act: (t, ref, action) => call<CardResponse>('POST', '/api/act', t, { ref, action }),
   sessionState: (t, id) => call<CardResponse>('GET', `/api/sessions/${id}/state`, t),
   note: (t, ref, audio) => call<CardResponse>('POST', '/api/notes', t, { ref, audio }),
@@ -157,7 +157,7 @@ describe('glasses controller', () => {
     expect(r.lens()).not.toMatch(/heard · swipe for next/);
   });
 
-  it('after connecting: hold, say a note, let go, tap, and it reaches their Telegram', async () => {
+  it.runIf(!!process.env.GROQ_API_KEY)('after connecting: hold, say a note, let go, tap, and it reaches their Telegram', async () => {
     const r = rig();
     await r.c.start();
     await pair(r.c);
@@ -179,6 +179,15 @@ describe('glasses controller', () => {
     expect(r.lens()).toMatch(/^Sent to Sam/);
     expect(outbox.map((m) => String(m.chatId))).toEqual(['8999010']);
     expect(outbox[0].text).toMatch(/via Chirp:\n[Nn]ice meeting you/);
+  });
+
+  it('every hearing tells the server which hardware and mic heard it', async () => {
+    const r = rig();
+    await r.c.start();
+    await pair(r.c);
+    await r.c.onFrame('HTEST0000');
+    const [row] = await q<{ model: string; mic: string }>(`SELECT model, mic FROM $S.resolves ORDER BY at DESC LIMIT 1`);
+    expect(row).toEqual({ model: 'none', mic: 'glasses' });
   });
 
   it('holding on a card without a note still pauses listening, and chirps are not recorded', async () => {
