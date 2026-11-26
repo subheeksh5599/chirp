@@ -13,9 +13,10 @@ import { searchMarkets } from '../polymarket.js';
 import { handleUpdate } from '../bot.js';
 import { route } from '../router.js';
 import { verifyRecord } from '../crypto.js';
-import { verifyInitData } from '../telegram.js';
+import { esc, verifyInitData } from '../telegram.js';
 import { LENS_GLYPHS, lensSafe, render, wrap } from '../lens.js';
 import { draftNote, NOTE_MAX_BYTES } from '../notes.js';
+import { parseSuggestions, recentRoom, suggestMessages } from '../suggest.js';
 import { readFileSync } from 'node:fs';
 
 const outbox: Outgoing[] = [];
@@ -40,6 +41,9 @@ function initDataFor(user: { id: number; first_name: string; username?: string }
   p.set('hash', createHmac('sha256', secret).update(check).digest('hex'));
   return p.toString();
 }
+
+/** These call Groq for real (Whisper speech-to-text or the suggestion model), so they need GROQ_API_KEY. Everything else runs with nothing configured. */
+const withGroq = it.runIf(!!process.env.GROQ_API_KEY);
 
 const SLIDES = [
   { title: 'Why glasses need ears', note: 'No camera, no NFC, no BLE scan' },
@@ -366,6 +370,160 @@ describe('sender previews match the lens exactly', () => {
   });
 });
 
+describe('single-use contact cards and bills: a recorded chirp is useless after the first tap', () => {
+  const sam = () => ({ id: 6100 + Math.floor(Math.random() * 1000), first_name: 'Sam', username: 'samreyes' });
+
+  it('the first tap connects; a second wearer who taps or hears it later gets "Card already used"', async () => {
+    const a = await pairedDevice('Ana', 'ana');
+    const b = await pairedDevice('Ben', 'ben');
+    const owner = sam();
+    const card = await issueConnect(initDataFor(owner), 'founder');
+    const seenByA = await heard(a.device, card.frame);
+    const seenByB = await heard(b.device, card.frame); // both heard it while it was fresh
+    expect((await act(a.device, seenByA.ref, 'tap')).kind).toBe('connected');
+    expect(await act(b.device, seenByB.ref, 'tap')).toMatchObject({ kind: 'error', lines: ['Card already used', 'ask them to chirp again'] });
+    // the same chirp replayed later (a recording) opens nothing
+    expect(await heard(b.device, card.frame)).toMatchObject({ kind: 'error', lines: ['Card already used', 'ask them to chirp again'] });
+    const rows = await q(`SELECT 1 FROM $S.contacts WHERE other_tg_id = $1`, [owner.id]);
+    expect(rows).toHaveLength(1); // only Ana saved Sam
+    expect(sentTo(owner.id).filter((m) => /just met you/.test(m.text))).toHaveLength(1);
+    const [r] = await q<{ outcome: string }>(`SELECT outcome FROM $S.resolves WHERE device_id = $1 ORDER BY at DESC LIMIT 1`, [b.device.id]);
+    expect(r.outcome).toBe('card-used');
+  });
+
+  it('the wearer who claimed it is told it is done, and nothing is sent twice', async () => {
+    const a = await pairedDevice('Ana', 'ana2');
+    const owner = sam();
+    const card = await issueConnect(initDataFor(owner), undefined);
+    const c = await heard(a.device, card.frame);
+    await act(a.device, c.ref, 'tap');
+    expect((await act(a.device, c.ref, 'tap')).lines[0]).toBe('Already connected with Sam');
+    expect((await heard(a.device, card.frame)).lines[0]).toBe('Already connected with Sam');
+    expect(sentTo(owner.id).filter((m) => /just met you/.test(m.text))).toHaveLength(1);
+  });
+
+  it('two wearers tapping at the same instant: exactly one connects', async () => {
+    const a = await pairedDevice('Ana', 'ana3');
+    const b = await pairedDevice('Ben', 'ben3');
+    const owner = sam();
+    const card = await issueConnect(initDataFor(owner), undefined);
+    const [ca, cb] = [await heard(a.device, card.frame), await heard(b.device, card.frame)];
+    const results = await Promise.all([act(a.device, ca.ref, 'tap'), act(b.device, cb.ref, 'tap')]);
+    expect(results.map((r) => r.kind).sort()).toEqual(['connected', 'error']);
+    expect(await q(`SELECT 1 FROM $S.contacts WHERE other_tg_id = $1`, [owner.id])).toHaveLength(1);
+  });
+
+  it('tapping your own card, or double-tapping to ignore, does not burn the code', async () => {
+    const owner = await pairedDevice('Sam', 'sam_own');
+    const a = await pairedDevice('Ana', 'ana4');
+    const card = await issueConnect(initDataFor({ id: owner.tgId, first_name: 'Sam' }), undefined);
+    const own = await heard(owner.device, card.frame);
+    await expect(act(owner.device, own.ref, 'tap')).rejects.toMatchObject({ status: 409 });
+    const c = await heard(a.device, card.frame);
+    expect((await act(a.device, c.ref, 'double')).lines[0]).toBe('Ignored');
+    expect((await act(a.device, c.ref, 'tap')).kind).toBe('connected');
+  });
+
+  it('a bill is claimed by the first payer; a second phone gets no wallet link', async () => {
+    const a = await pairedDevice('Ana', 'ana5');
+    const b = await pairedDevice('Ben', 'ben5');
+    const bill = await issueBill({ shop: 'Cafe Noor', amountTon: 0.1 });
+    const [ca, cb] = [await heard(a.device, bill.frame), await heard(b.device, bill.frame)];
+    expect((await act(a.device, ca.ref, 'tap')).lines[0]).toBe('Payment link sent');
+    expect((await act(b.device, cb.ref, 'tap')).lines[0]).toBe('Card already used');
+    expect(sentTo(b.tgId).filter((m) => /Open your wallet/.test(m.text))).toHaveLength(0);
+    expect((await act(a.device, ca.ref, 'tap')).lines[0]).toBe('Payment link already sent');
+    expect(sentTo(a.tgId).filter((m) => /Open your wallet/.test(m.text))).toHaveLength(1);
+  });
+
+  it('a shared link stays open: everyone who heard it can save it', async () => {
+    const a = await pairedDevice('Ana', 'ana6');
+    const b = await pairedDevice('Ben', 'ben6');
+    const link = await issueLink({ title: 'Launch thread', url: 'https://example.com/thread', from: 'Host' });
+    for (const w of [a, b]) {
+      const c = await heard(w.device, link.frame);
+      expect((await act(w.device, c.ref, 'tap')).lines[0]).toBe('Saved to Telegram');
+    }
+  });
+});
+
+describe('AI follow-up suggestions after connecting', () => {
+  it('keeps only clean, short, distinct messages from whatever the model returns', () => {
+    expect(parseSuggestions('not json')).toEqual([]);
+    expect(parseSuggestions('{"messages": "one string"}')).toEqual([]);
+    expect(
+      parseSuggestions(
+        JSON.stringify({
+          messages: [
+            '  "Great meeting you, Sam!"  ',
+            'great meeting you, sam!',
+            'Check out https://evil.example now',
+            'DM me at @someone',
+            'x'.repeat(81),
+            42,
+            'Coffee next week?',
+            'Tell me more about Tidepool',
+            'A fourth one that is dropped',
+          ],
+        }),
+      ),
+    ).toEqual(['Great meeting you, Sam!', 'Coffee next week?', 'Tell me more about Tidepool']);
+  });
+
+  it('with no model key the Connected card simply has no suggestions', async () => {
+    const saved = process.env.GROQ_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    try {
+      expect(await suggestMessages({ theirName: 'Sam' })).toEqual([]);
+      const w = await pairedDevice('Ana', 'ana_nokey');
+      const card = await issueConnect(initDataFor({ id: 7700 + Math.floor(Math.random() * 200), first_name: 'Sam' }), undefined);
+      const done = await act(w.device, (await heard(w.device, card.frame)).ref, 'tap');
+      expect(done).toMatchObject({ kind: 'connected', ref: { type: 'contact' }, lines: ['Connected with Sam', 'both of you got a message'] });
+      expect(done.tap).toBeUndefined();
+    } finally {
+      if (saved) process.env.GROQ_API_KEY = saved;
+    }
+  });
+
+  it('the room you were both in becomes "where we met"', async () => {
+    const w = await pairedDevice('Ana', 'ana_room');
+    const { id } = await createSession({ title: 'Founders breakfast', slides: SLIDES });
+    await heard(w.device, (await currentFrame(await getSession(id))).frame);
+    expect(await recentRoom(w.device.id)).toBe('Founders breakfast');
+    expect(await recentRoom((await pairedDevice('Ben', 'ben_room')).device.id)).toBeNull();
+  });
+
+  withGroq('the real model offers suggestions: double-tap shows the next, tap sends that one to their Telegram', async () => {
+    const w = await pairedDevice('Priya Rao', 'priya_s');
+    const sam = { id: 7900 + Math.floor(Math.random() * 99), first_name: 'Sam', username: 'samreyes' };
+    const card = await issueConnect(initDataFor(sam), 'founder, Tidepool');
+    const first = await act(w.device, (await heard(w.device, card.frame)).ref, 'tap');
+    expect(first).toMatchObject({ kind: 'connected', ref: { type: 'note' }, tap: 'send', voice: 'note to Sam' });
+    expect(first.lines[0]).toBe('Connected with Sam');
+    expect(first.lines[1]).toMatch(/^Send: "/);
+    expect(first.double).toMatch(/^next 1\/[23]$/);
+    const [{ n }] = await q<{ n: number }>(`SELECT count(*)::int AS n FROM $S.notes WHERE source = 'suggested' AND contact_id = (SELECT contact_id FROM $S.notes WHERE id = $1)`, [first.ref!.id]);
+    expect(n).toBeGreaterThanOrEqual(2);
+    const rows = await q<{ text: string }>(`SELECT text FROM $S.notes WHERE contact_id = (SELECT contact_id FROM $S.notes WHERE id = $1)`, [first.ref!.id]);
+    for (const r of rows) expect(r.text.length).toBeLessThanOrEqual(80);
+    expect(sentTo(sam.id).filter((m) => /via Chirp/.test(m.text))).toHaveLength(0); // nothing sent until a tap
+
+    const second = await act(w.device, first.ref, 'double');
+    expect(second.double).toMatch(/^next 2\//);
+    expect(second.ref!.id).not.toBe(first.ref!.id);
+    const chosen = (await one<{ text: string }>(`SELECT text FROM $S.notes WHERE id = $1`, [second.ref!.id]))!.text;
+
+    const sent = await act(w.device, second.ref, 'tap');
+    expect(sent.lines[0]).toBe('Sent to Sam');
+    const msg = sentTo(sam.id).filter((m) => /via Chirp/.test(m.text));
+    expect(msg).toHaveLength(1);
+    expect(msg[0].text).toContain(esc(chosen));
+    // the other suggestions are gone, and tapping again never sends twice
+    await expect(act(w.device, first.ref, 'tap')).rejects.toMatchObject({ status: 404 });
+    expect((await act(w.device, second.ref, 'tap')).lines[0]).toBe('Already sent to Sam');
+  });
+});
+
 describe('which hardware heard a chirp (the real-G2 evidence trail)', () => {
   it('records the model and mic the glasses report, and cleans up anything else', async () => {
     const { device } = await pairedDevice('Gee', 'gee');
@@ -400,9 +558,6 @@ describe('which hardware heard a chirp (the real-G2 evidence trail)', () => {
   });
 });
 
-/** These send real speech to Whisper, so they need GROQ_API_KEY; everything else runs with nothing configured. */
-const withSpeech = it.runIf(!!process.env.GROQ_API_KEY);
-
 describe('voice note after connecting (real speech-to-text)', () => {
   const speech = readFileSync(new URL('./fixtures/nice-meeting-you.wav', import.meta.url)).toString('base64');
   async function connected() {
@@ -415,11 +570,11 @@ describe('voice note after connecting (real speech-to-text)', () => {
 
   it('the connected card offers hold-to-speak, and the lens says so', async () => {
     const { done } = await connected();
-    expect(done).toMatchObject({ kind: 'connected', ref: { type: 'contact' }, voice: 'note to Sam' });
-    expect(render(done)).toMatch(/hold: note to Sam · swipe: back$/);
+    expect(done).toMatchObject({ kind: 'connected', voice: 'note to Sam' });
+    expect(render(done)).toMatch(/hold: note to Sam(?: · |\n)swipe: back$/);
   });
 
-  withSpeech('hold, speak, tap: the words are drafted on the lens, then sent to their Telegram', async () => {
+  withGroq('hold, speak, tap: the words are drafted on the lens, then sent to their Telegram', async () => {
     const { wearer, sam, done } = await connected();
     const draft = await draftNote(wearer.device, done.ref, speech);
     expect(draft).toMatchObject({ kind: 'draft', tap: 'send', double: 'discard' });
@@ -435,7 +590,7 @@ describe('voice note after connecting (real speech-to-text)', () => {
     expect(sentTo(sam.id).filter((m) => /via Chirp/.test(m.text))).toHaveLength(1);
   });
 
-  withSpeech('double-tap discards the draft and nothing is sent', async () => {
+  withGroq('double-tap discards the draft and nothing is sent', async () => {
     const { wearer, sam, done } = await connected();
     const draft = await draftNote(wearer.device, done.ref, speech);
     expect((await act(wearer.device, draft.ref, 'double')).lines[0]).toBe('Note discarded');
@@ -447,10 +602,10 @@ describe('voice note after connecting (real speech-to-text)', () => {
     const { wearer, done } = await connected();
     const blip = Buffer.alloc(44 + 3200).toString('base64');
     const c = await draftNote(wearer.device, done.ref, blip);
-    expect(c).toMatchObject({ kind: 'error', lines: ["Didn't catch that", 'hold, speak, then let go'], ref: done.ref, voice: 'note to Sam' });
+    expect(c).toMatchObject({ kind: 'error', lines: ["Didn't catch that", 'hold, speak, then let go'], ref: { type: 'contact' }, voice: 'note to Sam' });
   });
 
-  withSpeech('only the wearer who made the contact can draft or send to it', async () => {
+  withGroq('only the wearer who made the contact can draft or send to it', async () => {
     const { wearer, done } = await connected();
     const stranger = await pairedDevice('Mallory', 'mallory');
     await expect(draftNote(stranger.device, done.ref, speech)).rejects.toMatchObject({ status: 404 });
@@ -466,7 +621,7 @@ describe('voice note after connecting (real speech-to-text)', () => {
     await expect(draftNote(wearer.device, done.ref, long)).rejects.toMatchObject({ status: 413 });
   });
 
-  withSpeech('the route drafts a note for an authorised device', async () => {
+  withGroq('the route drafts a note for an authorised device', async () => {
     const { wearer, done } = await connected();
     const r = await route({
       method: 'POST', path: '/api/notes', query: new URLSearchParams(),

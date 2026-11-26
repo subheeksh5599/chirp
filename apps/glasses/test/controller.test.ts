@@ -164,7 +164,7 @@ describe('glasses controller', () => {
     const card = await issueConnect(initDataFor({ id: 8_999_010, first_name: 'Sam', username: 'sam' }));
     await r.c.onFrame(card.frame);
     await r.c.onInput('tap');
-    expect(r.lens()).toMatch(/^Connected with Sam[\s\S]*hold: note to Sam · swipe: back$/);
+    expect(r.lens()).toMatch(/^Connected with Sam[\s\S]*hold: note to Sam(?: · |\n)swipe: back$/);
     await r.c.onInput('hold-start');
     expect(r.lens()).toMatch(/^Recording note to Sam/);
     // the glasses mic streams 100 ms chunks while the touchpad is held; real speech from the fixture

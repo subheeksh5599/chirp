@@ -118,6 +118,8 @@ try {
   check('the contact card chirped through the air opens on the lens', !!opened);
   await input('click');
   check('a tap connects, and the lens offers a voice note', !!(await waitLog(/\[chirp\] acted tap → Connected with Sam/, 8000)));
+  await sleep(500);
+  writeFileSync(`${OUT}e2e-note-connected.png`, await lens());
 
   await input('long_press');
   check('holding the touchpad starts recording', !!(await waitLog(/\[chirp\] recording note to Sam/, 5000)));

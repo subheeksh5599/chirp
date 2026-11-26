@@ -40,7 +40,7 @@ if (local.length && !(globalThis as { __chirpSaid?: boolean }).__chirpSaid) {
   (globalThis as { __chirpSaid?: boolean }).__chirpSaid = true;
   console.log(
     `[tests] no .env: using local ${local.join(', ')}.` +
-      (process.env.GROQ_API_KEY ? '' : ' Speech-to-text tests skip without GROQ_API_KEY.') +
+      (process.env.GROQ_API_KEY ? '' : ' Tests that call Groq (speech-to-text, follow-up suggestions) skip without GROQ_API_KEY.') +
       (local.includes('TELEGRAM_BOT_TOKEN') ? ' The bot-name check skips without a real TELEGRAM_BOT_TOKEN.' : ''),
   );
 }
