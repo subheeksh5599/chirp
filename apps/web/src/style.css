@@ -193,3 +193,5 @@ footer a { color: var(--text-2); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+[hidden] { display: none !important; }
