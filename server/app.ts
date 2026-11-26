@@ -16,6 +16,7 @@ import {
 } from './sessions.js';
 import { connect, handoffCard, liveHandoff, saveLink, sendPayLink } from './handoff.js';
 import { liveMarker, markerCard, paperYes, saveMarket } from './markers.js';
+import { actOnNote, connectedCard } from './notes.js';
 
 /** Resolves a device may ask for per minute. A talk chirps every 20 s and a hand-off twice, so 30 is generous. */
 export const RESOLVES_PER_MINUTE = 30;
@@ -99,13 +100,12 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
         await saveLink(device, h);
         return infoCard('Saved to Telegram', h.payload.title);
       }
-      if (h.kind === 'connect') {
-        await connect(device, h);
-        return infoCard(`Connected with ${h.payload.name}`, 'both of you got a message');
-      }
+      if (h.kind === 'connect') return connectedCard(await connect(device, h), h.payload.name);
       await sendPayLink(device, h);
       return infoCard('Payment link sent', 'confirm it in your wallet', 'on your phone');
     }
+    case 'note':
+      return actOnNote(device, ref.id, action);
     case 'marker': {
       const m = await liveMarker(ref.id);
       if (!m) return errorCard('Marker expired');

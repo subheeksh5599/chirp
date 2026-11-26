@@ -15,6 +15,8 @@ import { route } from '../router.js';
 import { verifyRecord } from '../crypto.js';
 import { verifyInitData } from '../telegram.js';
 import { LENS_GLYPHS, lensSafe, render, wrap } from '../lens.js';
+import { draftNote, NOTE_MAX_BYTES } from '../notes.js';
+import { readFileSync } from 'node:fs';
 
 const outbox: Outgoing[] = [];
 const sentTo = (chatId: number) => outbox.filter((m) => String(m.chatId) === String(chatId));
@@ -260,6 +262,7 @@ describe('hand-off: contact cards', () => {
     expect(c.lines).toEqual(['Sam', 'founder, Tidepool', '@samreyes']);
     const done = await act(wearer.device, c.ref, 'tap');
     expect(done.lines[0]).toBe('Connected with Sam');
+    expect(done.kind).toBe('connected');
     expect(sentTo(5150)[0].text).toMatch(/Priya Rao.*@priya.*just met you through Chirp/);
     expect(sentTo(wearer.tgId)[0].text).toMatch(/Saved contact: <b>Sam<\/b> · founder, Tidepool · @samreyes/);
     const row = await one(`SELECT other_name, role FROM $S.contacts WHERE device_id = $1`, [wearer.device.id]);
@@ -360,6 +363,81 @@ describe('sender previews match the lens exactly', () => {
     const b = await issueBill({ shop: 'Preview Café', amountTon: 0.25, memo: 'one tea' });
     expect(render(await heard(device, b.frame))).toBe(b.lens);
     expect(b.lens).toMatch(/0\.25 TON · testnet/);
+  });
+});
+
+describe('voice note after connecting (real speech-to-text)', () => {
+  const speech = readFileSync(new URL('./fixtures/nice-meeting-you.wav', import.meta.url)).toString('base64');
+  async function connected() {
+    const wearer = await pairedDevice('Priya Rao', 'priya');
+    const sam = { id: 5250 + Math.floor(Math.random() * 1000), first_name: 'Sam', username: 'samreyes' };
+    const card = await issueConnect(initDataFor(sam), 'founder');
+    const done = await act(wearer.device, (await heard(wearer.device, card.frame)).ref, 'tap');
+    return { wearer, sam, done };
+  }
+
+  it('the connected card offers hold-to-speak, and the lens says so', async () => {
+    const { done } = await connected();
+    expect(done).toMatchObject({ kind: 'connected', ref: { type: 'contact' }, voice: 'note to Sam' });
+    expect(render(done)).toMatch(/hold: note to Sam · swipe: back$/);
+  });
+
+  it('hold, speak, tap: the words are drafted on the lens, then sent to their Telegram', async () => {
+    const { wearer, sam, done } = await connected();
+    const draft = await draftNote(wearer.device, done.ref, speech);
+    expect(draft).toMatchObject({ kind: 'draft', tap: 'send', double: 'discard' });
+    expect(draft.lines[0]).toBe('To Sam:');
+    expect(draft.lines.slice(1).join(' ').toLowerCase()).toMatch(/nice meeting you/);
+    expect(sentTo(sam.id).filter((m) => /via Chirp/.test(m.text))).toHaveLength(0); // nothing sent before the tap
+    const sent = await act(wearer.device, draft.ref, 'tap');
+    expect(sent.lines[0]).toBe('Sent to Sam');
+    const msg = sentTo(sam.id).at(-1)!;
+    expect(msg.text).toMatch(/Priya Rao.*@priya.*via Chirp:\n.*[Nn]ice meeting you/);
+    expect(msg.buttons?.[0][0]).toMatchObject({ text: 'Reply to Priya Rao', url: 'https://t.me/priya' });
+    expect((await act(wearer.device, draft.ref, 'tap')).lines[0]).toBe('Already sent to Sam'); // a second tap never resends
+    expect(sentTo(sam.id).filter((m) => /via Chirp/.test(m.text))).toHaveLength(1);
+  });
+
+  it('double-tap discards the draft and nothing is sent', async () => {
+    const { wearer, sam, done } = await connected();
+    const draft = await draftNote(wearer.device, done.ref, speech);
+    expect((await act(wearer.device, draft.ref, 'double')).lines[0]).toBe('Note discarded');
+    expect(sentTo(sam.id).filter((m) => /via Chirp/.test(m.text))).toHaveLength(0);
+    await expect(act(wearer.device, draft.ref, 'tap')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('a press too short to hold speech asks again, without calling speech-to-text', async () => {
+    const { wearer, done } = await connected();
+    const blip = Buffer.alloc(44 + 3200).toString('base64');
+    const c = await draftNote(wearer.device, done.ref, blip);
+    expect(c).toMatchObject({ kind: 'error', lines: ["Didn't catch that", 'hold, speak, then let go'], ref: done.ref, voice: 'note to Sam' });
+  });
+
+  it('only the wearer who made the contact can draft or send to it', async () => {
+    const { wearer, done } = await connected();
+    const stranger = await pairedDevice('Mallory', 'mallory');
+    await expect(draftNote(stranger.device, done.ref, speech)).rejects.toMatchObject({ status: 404 });
+    const draft = await draftNote(wearer.device, done.ref, speech);
+    await expect(act(stranger.device, draft.ref, 'tap')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('refuses a missing ref, missing audio and clips over 15 seconds', async () => {
+    const { wearer, done } = await connected();
+    await expect(draftNote(wearer.device, { type: 'session', id: 'X' }, speech)).rejects.toMatchObject({ status: 400 });
+    await expect(draftNote(wearer.device, done.ref, undefined)).rejects.toMatchObject({ status: 400 });
+    const long = Buffer.alloc(NOTE_MAX_BYTES + 2).toString('base64');
+    await expect(draftNote(wearer.device, done.ref, long)).rejects.toMatchObject({ status: 413 });
+  });
+
+  it('the route drafts a note for an authorised device', async () => {
+    const { wearer, done } = await connected();
+    const r = await route({
+      method: 'POST', path: '/api/notes', query: new URLSearchParams(),
+      headers: { authorization: `Bearer ${wearer.token}` }, body: { ref: done.ref, audio: speech },
+    });
+    expect(r.status).toBe(200);
+    expect((r.body as { text: string }).text).toMatch(/^To Sam:/);
+    expect((await route({ method: 'POST', path: '/api/notes', query: new URLSearchParams(), headers: {}, body: {} })).status).toBe(401);
   });
 });
 

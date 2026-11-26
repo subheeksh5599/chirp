@@ -1,14 +1,16 @@
 // What the glasses show. The server decides the words; the glasses only lay them out.
-export type Ref = { type: 'session' | 'presence' | 'handoff' | 'marker'; id: string };
+export type Ref = { type: 'session' | 'presence' | 'handoff' | 'marker' | 'contact' | 'note'; id: string };
 
 export type Card = {
-  kind: 'slide' | 'poll' | 'presence' | 'connect' | 'pay' | 'link' | 'market' | 'info' | 'error';
+  kind: 'slide' | 'poll' | 'presence' | 'connect' | 'connected' | 'draft' | 'pay' | 'link' | 'market' | 'info' | 'error';
   ref?: Ref;
   lines: string[];
   /** Label for one tap; absent means tap does nothing on this card. */
   tap?: string;
   /** Label for a double tap. */
   double?: string;
+  /** Label for press-and-hold to record a voice note; absent means holding pauses listening as usual. */
+  voice?: string;
   /** While true, the glasses keep this card fresh by polling the session state. */
   live?: boolean;
 };
@@ -67,7 +69,7 @@ export function lensSafe(text: string): string {
 /** Final lens text: content lines plus one hint line. */
 export function render(card: Card): string {
   const body = card.lines.slice(0, MAX_LINES).map((l) => clip(lensSafe(l)));
-  const hints = [card.tap && `tap: ${card.tap}`, card.double && `2×tap: ${card.double}`, 'swipe: back']
+  const hints = [card.tap && `tap: ${card.tap}`, card.double && `2×tap: ${card.double}`, card.voice && `hold: ${card.voice}`, 'swipe: back']
     .filter(Boolean)
     .join(' · ');
   return [...body, '', clip(lensSafe(hints), LENS_COLS + 12)].join('\n');

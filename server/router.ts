@@ -4,6 +4,7 @@ import { HttpError, env } from './env.js';
 import { render, type Card } from './lens.js';
 import { createDevice, deviceFromAuth } from './devices.js';
 import { act, heard, sessionState } from './app.js';
+import { draftNote } from './notes.js';
 import {
   adminSession,
   createSession,
@@ -48,6 +49,9 @@ const routes: Array<[string, RegExp, Handler]> = [
   ['POST', /^\/api\/heard$/, async (r) => card(await heard(await deviceFromAuth(r.headers.authorization), r.body.frame))],
   ['POST', /^\/api\/act$/, async (r) =>
     card(await act(await deviceFromAuth(r.headers.authorization), r.body.ref as never, r.body.action))],
+
+  ['POST', /^\/api\/notes$/, async (r) =>
+    card(await draftNote(await deviceFromAuth(r.headers.authorization), r.body.ref as never, r.body.audio))],
 
   ['POST', /^\/api\/sessions$/, async (r) => ok(await createSession(r.body), 201)],
   ['GET', /^\/api\/sessions\/([0-9A-Z]{8})\/state$/, async (r, [id]) =>

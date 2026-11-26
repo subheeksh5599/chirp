@@ -107,13 +107,14 @@ export async function connect(device: Device & { tg_user_id: string }, h: Handof
   if (!h.owner_tg_id) throw new HttpError(409, 'card has no owner');
   if (String(h.owner_tg_id) === String(device.tg_user_id)) throw new HttpError(409, 'that is your own card');
   // Both people keep the contact: the wearer, and the person who chirped their card (no glasses needed).
-  const save = (owner: string | number, deviceId: string | null, otherId: string | number, name: string, username: string | null, role: string | null) =>
-    q(
+  const save = async (owner: string | number, deviceId: string | null, otherId: string | number, name: string, username: string | null, role: string | null) =>
+    (await q<{ id: string }>(
       `INSERT INTO $S.contacts (owner_tg_id, device_id, other_tg_id, other_name, other_username, role) VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (owner_tg_id, other_tg_id) DO UPDATE SET met_at = now(), role = coalesce(excluded.role, $S.contacts.role)`,
+       ON CONFLICT (owner_tg_id, other_tg_id) DO UPDATE SET met_at = now(), role = coalesce(excluded.role, $S.contacts.role)
+       RETURNING id`,
       [owner, deviceId, otherId, name, username, role],
-    );
-  await save(device.tg_user_id, device.id, h.owner_tg_id, other.name, other.username ?? null, other.role ?? null);
+    ))[0].id;
+  const contactId = await save(device.tg_user_id, device.id, h.owner_tg_id, other.name, other.username ?? null, other.role ?? null);
   await save(h.owner_tg_id, null, device.tg_user_id, device.tg_name ?? 'Chirp contact', device.tg_username ?? null, null);
   const me = device.tg_name ?? 'Someone';
   const meLink = device.tg_username ? `https://t.me/${device.tg_username}` : null;
@@ -128,6 +129,7 @@ export async function connect(device: Device & { tg_user_id: string }, h: Handof
     `Saved contact: <b>${esc(other.name)}</b>${other.role ? ` · ${esc(other.role)}` : ''}${other.username ? ` · @${esc(other.username)}` : ''}\nThey got your intro.`,
     otherLink ? [[{ text: `Message ${other.name}`, url: otherLink }]] : undefined,
   );
+  return String(contactId);
 }
 
 export async function sendPayLink(device: Device & { tg_user_id: string }, h: Handoff) {
