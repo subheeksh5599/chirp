@@ -152,3 +152,11 @@ CREATE TABLE IF NOT EXISTS $S.notes (
 -- v6: which hardware heard each chirp (as reported by the Even Hub SDK), so a first real-G2 hearing is visible
 ALTER TABLE $S.resolves ADD COLUMN IF NOT EXISTS model text;
 ALTER TABLE $S.resolves ADD COLUMN IF NOT EXISTS mic text;
+
+-- v7: contact cards and bills are single-use; the first tap claims them (links stay open to every listener)
+ALTER TABLE $S.handoffs ADD COLUMN IF NOT EXISTS used_at timestamptz;
+ALTER TABLE $S.handoffs ADD COLUMN IF NOT EXISTS used_by uuid;
+
+-- v8: notes can be AI-suggested follow-ups (offered on the lens after connecting) as well as spoken ones
+ALTER TABLE $S.notes ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'voice';
+ALTER TABLE $S.notes ADD COLUMN IF NOT EXISTS pos int NOT NULL DEFAULT 0;

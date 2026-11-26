@@ -14,9 +14,10 @@ import {
   sessionCard,
   vote,
 } from './sessions.js';
-import { connect, handoffCard, liveHandoff, saveLink, sendPayLink } from './handoff.js';
+import { claimHandoff, connect, handoffCard, liveHandoff, releaseHandoff, saveLink, sendPayLink, singleUse } from './handoff.js';
 import { liveMarker, markerCard, paperYes, saveMarket } from './markers.js';
 import { actOnNote, connectedCard } from './notes.js';
+import { recentRoom, saveSuggestions, suggestMessages } from './suggest.js';
 
 /** Resolves a device may ask for per minute. A talk chirps every 20 s and a hand-off twice, so 30 is generous. */
 export const RESOLVES_PER_MINUTE = 30;
@@ -24,7 +25,7 @@ export const RESOLVES_PER_MINUTE = 30;
 /** The fixed code the sound-test page and the home page play (`HTEST0000`). */
 export const SOUND_TEST_CODE = 'TEST0000';
 
-export type Outcome = 'ok' | 'sound-test' | 'not-a-code' | 'room-code-rejected' | 'card-expired' | 'marker-expired';
+export type Outcome = 'ok' | 'sound-test' | 'not-a-code' | 'room-code-rejected' | 'card-expired' | 'card-used' | 'marker-expired';
 
 /** What the glasses app reports about the hardware that heard a chirp. Anything else is stored as 'unknown'. */
 export type Hearing = { model?: unknown; mic?: unknown };
@@ -66,6 +67,7 @@ async function resolve(device: Device, text: string, nowMs: number): Promise<[Ca
   if (f.type === 'H') {
     const h = await liveHandoff(f.code);
     if (!h) return [errorCard('Card expired', 'ask them to chirp again'), 'card-expired'];
+    if (singleUse(h) && h.used_at) return [usedCard(device, h), 'card-used'];
     return [await handoffCard(device, h), 'ok'];
   }
   const m = await liveMarker(f.code);
@@ -112,9 +114,27 @@ export async function act(device: Device, ref: Ref | undefined, action: unknown)
         await saveLink(device, h);
         return infoCard('Saved to Telegram', h.payload.title);
       }
-      if (h.kind === 'connect') return connectedCard(await connect(device, h), h.payload.name);
-      await sendPayLink(device, h);
-      return infoCard('Payment link sent', 'confirm it in your wallet', 'on your phone');
+      // Your own card is refused before claiming, so tapping it never burns the code for the person you meet.
+      if (h.kind === 'connect' && String(h.owner_tg_id) === String(device.tg_user_id)) throw new HttpError(409, 'that is your own card');
+      if (!(await claimHandoff(h.token, device.id))) return usedCard(device, (await liveHandoff(h.token)) ?? h);
+      try {
+        if (h.kind === 'connect') {
+          const contactId = await connect(device, h);
+          const texts = await suggestMessages({
+            theirName: h.payload.name,
+            theirRole: h.payload.role,
+            myName: device.tg_name,
+            where: await recentRoom(device.id),
+          });
+          const ids = await saveSuggestions(contactId, texts);
+          return connectedCard(contactId, h.payload.name, ids.map((id, i) => ({ id, text: texts[i] })));
+        }
+        await sendPayLink(device, h);
+        return infoCard('Payment link sent', 'confirm it in your wallet', 'on your phone');
+      } catch (e) {
+        await releaseHandoff(h.token, device.id);
+        throw e;
+      }
     }
     case 'note':
       return actOnNote(device, ref.id, action);
@@ -145,4 +165,10 @@ export async function hearingTally() {
     note: 'model is what the Even Hub SDK reports (g2 = real glasses; none = the simulator, which has no device). decoded = chirps that resolved to a Chirp card or the sound test. unknown = hearings from before hardware tracking started (2026-11-27).',
     rows,
   };
+}
+
+/** A single-use card someone already tapped. The device that claimed it is told it is done; anyone else, that it is gone. */
+function usedCard(device: Device, h: { kind: string; used_by: string | null; payload: { name?: string } }): Card {
+  if (h.used_by === device.id) return h.kind === 'connect' ? infoCard(`Already connected with ${h.payload.name}`) : infoCard('Payment link already sent', 'check your Telegram');
+  return errorCard('Card already used', 'ask them to chirp again');
 }

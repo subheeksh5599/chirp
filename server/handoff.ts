@@ -14,7 +14,18 @@ const MAX_PAY_TON = 5;
 type ConnectPayload = { name: string; username?: string; role?: string };
 type LinkPayload = { title: string; url?: string; note?: string; from?: string };
 type PayPayload = { shop: string; amountNano: string; memo?: string };
-type Handoff = { token: string; kind: 'connect' | 'pay' | 'link'; owner_tg_id: string | null; payload: ConnectPayload & PayPayload & LinkPayload; expires_at: string };
+type Handoff = {
+  token: string;
+  kind: 'connect' | 'pay' | 'link';
+  owner_tg_id: string | null;
+  payload: ConnectPayload & PayPayload & LinkPayload;
+  expires_at: string;
+  used_at: string | null;
+  used_by: string | null;
+};
+
+/** A contact card or a bill belongs to one person: the first tap claims it. A link is for everyone who heard it. */
+export const singleUse = (h: Pick<Handoff, 'kind'>) => h.kind === 'connect' || h.kind === 'pay';
 
 async function issue(kind: Handoff['kind'], ownerTgId: number | null, payload: object, ttlS = HANDOFF_TTL_S) {
   const token = randomCode(8);
@@ -64,6 +75,23 @@ export async function issueBill(body: Record<string, unknown>) {
 
 export async function liveHandoff(token: string): Promise<Handoff | null> {
   return one<Handoff>(`SELECT * FROM $S.handoffs WHERE token = $1 AND expires_at > now()`, [token]);
+}
+
+/**
+ * Claim a single-use hand-off for this device. Atomic: of two taps racing, exactly one wins.
+ * Returns false when it was already claimed (or expired in between).
+ */
+export async function claimHandoff(token: string, deviceId: string): Promise<boolean> {
+  const won = await one<{ token: string }>(
+    `UPDATE $S.handoffs SET used_at = now(), used_by = $2 WHERE token = $1 AND used_at IS NULL AND expires_at > now() RETURNING token`,
+    [token, deviceId],
+  );
+  return !!won;
+}
+
+/** Give a claim back when acting on it failed, so a server error never burns someone's card. */
+export async function releaseHandoff(token: string, deviceId: string): Promise<void> {
+  await q(`UPDATE $S.handoffs SET used_at = NULL, used_by = NULL WHERE token = $1 AND used_by = $2`, [token, deviceId]);
 }
 
 /** The card a listener sees for a hand-off, before acting on it. Pure, so senders can preview it. */
