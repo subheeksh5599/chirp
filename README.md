@@ -48,14 +48,17 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 
 ## The 20-second pitch
 
-Everyone building for glasses builds a feed: your messages, your prices, your inbox, on your lens. The glasses still can't take anything **in** from the room you're standing in. Chirp gives them that, with the one sense they have.
+**One laptop talks to every pair of glasses in the room.** A speaker's console plays a soft chirp every 20 seconds. Every lens in earshot follows the current slide, votes in live polls with a tap, and reads live subtitles. Only the speaker sets anything up; the audience just looks. A QR code can't do this: it reaches the front rows for a few seconds, and glasses can't scan it at all.
 
-- **Broadcast.** A speaker's laptop chirps every 20 seconds. Every lens in the room follows the current slide, votes in live polls with a tap, and reads live subtitles. Only the speaker sets anything up.
+The same chirp then does more:
+
 - **Presence.** The room's code changes every 5 seconds. Hearing at least 3 of them across 10 minutes (the defaults) earns a signed presence record you can anchor on TON testnet.
-- **Sync.** A stream host marks the market they're talking about. Viewers' lenses show it with live odds, and a double-tap opens a paper position.
+- **Markets.** A stream host marks the market they're talking about. Viewers' lenses show it with live odds, and a double-tap opens a paper position.
 - **Hand-off.** A host chirps a link on a voice call. A counter chirps a bill. Someone you meet chirps their card from Telegram, one tap connects you, and you can hold and say a note that lands in their chat.
 
 Every one of those ends in your Telegram chat with the bot, and `/heard` keeps the day's list.
+
+**What the sound gives away:** only a short code, never your name or number. Contact and bill codes die after 60 seconds, and one recorded room code can never prove you were there.
 
 | The speaker console | Sharing a link |
 |---|---|
@@ -393,7 +396,7 @@ Checked only when true on a real run.
 **Works end to end**
 - [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, bills), sync (markers, paper positions) all run against production services
 - [x] Every heard item lands in Telegram and shows in `/heard`
-- [x] Replay, forgery and single-shared-code attacks are refused by tests
+- [x] Room-code replay (an old slot), forgery and single-shared-code attacks are refused by tests
 - [x] Decode rates published through call, stream and podcast codecs ([measurements §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline))
 - [x] Decode rate published for a phone sender at 30 cm and 1 m ([measurements §4c](docs/MEASUREMENTS.md#4c-a-phone-as-the-sender)); 3–5 m still open
 - [ ] Decode rate measured on a live call with the call app's noise suppression on
@@ -424,6 +427,7 @@ Checked only when true on a real run.
 | Vote without being in the room | `a device that never heard the room cannot vote or read its state` |
 | Take over someone's talk | Admin secret required: `only the owner can control a session` |
 | Spam the bot webhook | Secret header required: `health, 404 and auth errors` |
+| Replay a contact or bill chirp | **Not blocked inside its 60 s life**: anyone whose glasses hear it in that minute can tap it, and a second tap works too. After 60 s it is refused: `your own card and expired cards are refused`. A replayed bill only re-sends the same wallet link (same amount, same comment); nothing moves until someone approves it in their own wallet |
 
 ## Limitations
 
