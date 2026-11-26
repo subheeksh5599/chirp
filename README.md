@@ -7,7 +7,7 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-137%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-147%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -44,7 +44,7 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator: Mac speaker → Mac mic, and a phone at 30 cm (10/10) and 1 m | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
 | Real glasses | ⏳ not tested | no device yet. Every hearing records the hardware the SDK reports, so the first real-G2 decode shows up at [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing). Owners: [2-minute check](#have-a-g2-check-it-in-two-minutes) |
-| Tests | ✅ 137 passing in CI; a fresh clone passes with nothing configured (131 pass, 6 need secrets and skip) | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Tests | ✅ 147 passing in CI; a fresh clone passes with nothing configured (140 pass, 7 need secrets and skip) | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -54,11 +54,11 @@ The same chirp then does more:
 
 - **Presence.** The room's code changes every 5 seconds. Hearing at least 3 of them across 10 minutes (the defaults) earns a signed presence record you can anchor on TON testnet.
 - **Markets.** A stream host marks the market they're talking about. Viewers' lenses show it with live odds, and a double-tap opens a paper position.
-- **Hand-off.** A host chirps a link on a voice call. A counter chirps a bill. Someone you meet chirps their card from Telegram, one tap connects you, and you can hold and say a note that lands in their chat.
+- **Hand-off.** A host chirps a link on a voice call. A counter chirps a bill. Someone you meet chirps their card from Telegram, and one tap connects you. The lens then suggests a follow-up message (tap to send, double-tap for the next), or you hold and say your own.
 
 Every one of those ends in your Telegram chat with the bot, and `/heard` keeps the day's list.
 
-**What the sound gives away:** only a short code, never your name or number. Contact and bill codes die after 60 seconds, and one recorded room code can never prove you were there.
+**What the sound gives away:** only a short code, never your name or number. A contact card or bill works for the first tap only and dies after 60 seconds anyway, so a recorded chirp is useless. A link stays open to everyone who heard it, and one recorded room code can never prove you were there.
 
 | The speaker console | Sharing a link |
 |---|---|
@@ -316,6 +316,8 @@ sequenceDiagram
 | One shared code never proves presence | `packages/wire/src/presence.ts` | `one shared code never qualifies`, `one code shared in a chat does not qualify` |
 | Presence records can't be edited | `server/crypto.ts` | `codes spread over the session qualify; a claim is signed and sent to Telegram` |
 | Contact cards come from the real Telegram user | `server/telegram.ts` | `requires valid Telegram initData` |
+| A contact card or bill is claimed by the first tap only | `server/handoff.ts` (`claimHandoff`) | `the first tap connects…`, `two wearers tapping at the same instant: exactly one connects`, `a bill is claimed by the first payer…` |
+| A suggested follow-up is only sent on a tap, and never invents links or handles | `server/suggest.ts` | `keeps only clean, short, distinct messages from whatever the model returns` |
 | A voice note is sent only on a tap, once, and only by the wearer who made the contact | `server/notes.ts` | `hold, speak, tap: the words are drafted on the lens, then sent to their Telegram`, `only the wearer who made the contact can draft or send to it` |
 | You can't connect with your own card; expired cards fail | `server/handoff.ts` | `your own card and expired cards are refused` |
 | Payments go to the wallet with a unique comment and are only marked paid on-chain | `server/handoff.ts`, `server/ton.ts` | `tap sends a wallet link with a unique comment; unpaid until it is on-chain` |
@@ -372,6 +374,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Presence anchor on TON testnet | ✅ record `27VHDCYT`: 6 room codes heard through the air by the simulator, signed, [anchored](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b) | `npm run presence:live`, then `npm run testnet -- anchor <id>`; [`/api/presence/27VHDCYT`](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT) shows `signatureValid: true` |
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
 | Two real Telegram accounts connected by one chirp | ✅ 2026-11-25: account B chirped its card from the Mini App on a phone; the simulator, paired to account A, heard `HBKPBM2ET`, a tap connected them, and both accounts list each other in `/met` (re-run after the fix that saves the contact on the sender's side too) | simulator log: `card connect` → `acted tap → Connected with …` |
+| AI follow-up suggestions after connecting | ✅ built and tested against the real model; not yet seen on the simulator lens | `server/test/server.test.ts` (`AI follow-up suggestions after connecting`); without a model key the card shows no suggestions |
 | Voice note after connecting: hold, speak, tap to send | ✅ 2026-11-26: the simulator heard a contact card through the air, a tap connected, holding recorded 4.8 s of speech from the Mac speaker, Whisper returned "Nice meeting you. Let's grab coffee next week." as a draft on the lens, and a tap delivered it to a second real Telegram account (8/8 checks in 2 of 3 back-to-back runs; the third never heard the contact chirp, the known laptop-speaker-into-its-own-mic weakness in [MEASUREMENTS](docs/MEASUREMENTS.md). Every run that got past the chirp passed the voice steps) | `npm run e2e:note`, `server/test/server.test.ts` (`voice note after connecting`), `apps/glasses/test/controller.test.ts` |
 | Share link `t.me/Chirp567_bot?start=me` answers with one **Chirp my card** button; the "you met" message carries the Mini App button | ✅ | `server/test/server.test.ts` (`the share link (?start=me)…`, `…their next swap is one tap`) |
 | Home-screen icon offered after the first chirp | ⏳ built, not yet tried on a phone | `apps/web/src/mini.ts` (`offerHomeScreen`); shows only where Telegram supports it |
@@ -427,7 +430,7 @@ Checked only when true on a real run.
 | Vote without being in the room | `a device that never heard the room cannot vote or read its state` |
 | Take over someone's talk | Admin secret required: `only the owner can control a session` |
 | Spam the bot webhook | Secret header required: `health, 404 and auth errors` |
-| Replay a contact or bill chirp | **Not blocked inside its 60 s life**: anyone whose glasses hear it in that minute can tap it, and a second tap works too. After 60 s it is refused: `your own card and expired cards are refused`. A replayed bill only re-sends the same wallet link (same amount, same comment); nothing moves until someone approves it in their own wallet |
+| Record a contact card or bill chirp and replay it | Single-use: the first tap claims it, and anyone who taps or hears it after gets "Card already used". Two taps racing: exactly one wins. After 60 s it is refused anyway: `the first tap connects; a second wearer who taps or hears it later gets "Card already used"`, `two wearers tapping at the same instant: exactly one connects`, `a bill is claimed by the first payer` |
 
 ## Limitations
 
@@ -487,7 +490,7 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 137 tests; no .env needed (server tests use a throwaway schema)
+npm test                      # 147 tests; no .env needed (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run e2e:note              # contact chirp → connect → hold and speak → draft → tap to send (plays sound and speech)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
@@ -516,22 +519,22 @@ Every hearing is recorded with the device model the Even Hub SDK reports and the
 
 | Suite | Tests |
 |---|---|
-| `server/test/server.test.ts` | 54 |
+| `server/test/server.test.ts` | 64 |
 | `packages/wire/test/wire.test.ts` | 19 |
 | `apps/glasses/test/controller.test.ts` | 14 |
 | `packages/wire/test/properties.test.ts` | 13 |
 | `packages/sound/test/soften.test.ts` | 7 |
 | `scripts/test/whitelist.test.ts` | 5 |
 | `apps/glasses/test/dedupe.test.ts` | 4 |
-| `scripts/test/icon.test.ts` | 4 |
-| `scripts/test/privacy.test.ts` | 4 |
 | `packages/sound/test/sound.test.ts` | 4 |
 | `packages/wire/test/deck.test.ts` | 4 |
+| `scripts/test/icon.test.ts` | 4 |
+| `scripts/test/privacy.test.ts` | 4 |
 | `apps/web/test/envelope.test.ts` | 3 |
 | `apps/glasses/test/wav.test.ts` | 2 |
-| **Total** | **137** |
+| **Total** | **147** |
 
-**On a fresh clone, `npm ci && npm test` passes with nothing configured: 131 pass, 6 skip.** With no `.env`, the server and controller tests run on [PGlite](https://pglite.dev) (the real Postgres engine compiled to WASM, in-process) with throwaway local values: a test bot token, a fresh signing key per run, and a public testnet wallet. The 6 that skip need a real secret: 5 send real speech to Whisper (`GROQ_API_KEY`), and 1 reads the bot's name with a real `TELEGRAM_BOT_TOKEN`. With the secrets (as in CI) all 137 run against the real Neon database in a throwaway schema. The whitelist test builds the glasses app itself, so it checks this commit's bundle and never a stale one.
+**On a fresh clone, `npm ci && npm test` passes with nothing configured: 140 pass, 7 skip.** With no `.env`, the server and controller tests run on [PGlite](https://pglite.dev) (the real Postgres engine compiled to WASM, in-process) with throwaway local values: a test bot token, a fresh signing key per run, and a public testnet wallet. The 7 that skip need a real secret: 6 call Groq for real (`GROQ_API_KEY`: 5 send speech to Whisper, 1 asks the suggestion model), and 1 reads the bot's name with a real `TELEGRAM_BOT_TOKEN`. With the secrets (as in CI) all 147 run against the real Neon database in a throwaway schema. The whitelist test builds the glasses app itself, so it checks this commit's bundle and never a stale one.
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. The market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
