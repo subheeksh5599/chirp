@@ -484,6 +484,20 @@ describe('bot log commands', () => {
     await handleUpdate({ message: { chat: { id: w.tgId, type: 'private' }, from: { id: w.tgId, first_name: 'Lee' }, text: '/met' } });
     expect(sentTo(w.tgId).at(-1)!.text).toMatch(/Noor · designer/);
   });
+  it('the share link (?start=me) answers with one button straight into the Mini App', async () => {
+    await handleUpdate({ message: { chat: { id: 7474, type: 'private' }, from: { id: 7474, first_name: 'Noor' }, text: '/start me' } });
+    const m = sentTo(7474).at(-1)!;
+    expect(m.text).toMatch(/Tap <b>Chirp my card<\/b>/);
+    expect(m.buttons).toEqual([[{ text: 'Chirp my card', web_app: { url: expect.stringMatching(/\/mini\.html$/) } }]]);
+  });
+  it('the person who was met gets the Mini App under the message, so their next swap is one tap', async () => {
+    const w = await pairedDevice('Lee', 'lee');
+    const card = await issueConnect(initDataFor({ id: 7575, first_name: 'Noor' }), undefined);
+    await act(w.device, (await heard(w.device, card.frame)).ref, 'tap');
+    const buttons = sentTo(7575).at(-1)!.buttons!.flat();
+    expect(buttons.map((b) => b.text)).toEqual(['Message Lee', 'Chirp my card to someone']);
+    expect(buttons[1]).toMatchObject({ web_app: { url: expect.stringMatching(/\/mini\.html$/) } });
+  });
   it('the person who chirped their card, with no glasses, also gets the contact in /met', async () => {
     const w = await pairedDevice('Lee', 'lee');
     const card = await issueConnect(initDataFor({ id: 7373, first_name: 'Noor', username: 'noor' }), 'designer');

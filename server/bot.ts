@@ -27,6 +27,9 @@ const HELP = [
   'To share your own card, tap <b>Chirp me</b> below the message box.',
 ].join('\n');
 
+/** Reply to the share link: the person without glasses only needs this one button. */
+export const CHIRP_ME = 'Tap <b>Chirp my card</b> and hold your phone near their glasses. Next time it is already here: the <b>Chirp me</b> button next to the message box.';
+
 const time = (iso: string) => new Date(iso).toISOString().slice(11, 16) + ' UTC';
 
 async function heardToday(userId: number) {
@@ -103,6 +106,10 @@ export async function handleUpdate(u: Update) {
     const d = await pairDevice(code, { id: m.from.id, name: displayName(m.from), username: m.from.username });
     await notify(m.chat.id, d ? '✓ Paired. Your glasses are linked to this chat.' : 'That code is not valid. Check the number on your lens.');
     return;
+  }
+  // t.me/<bot>?start=me: someone was just asked "chirp me your card". Skip the manual; one button, straight to the chirp.
+  if (cmd === '/start' && arg === 'me') {
+    return void (await notify(m.chat.id, CHIRP_ME, [[{ text: 'Chirp my card', web_app: { url: `${env.publicUrl}/mini.html` } }]]));
   }
   if (cmd === '/heard') return void (await notify(m.chat.id, await heardToday(m.from.id)));
   if (cmd === '/met') return void (await notify(m.chat.id, await met(m.from.id)));

@@ -121,7 +121,11 @@ export async function connect(device: Device & { tg_user_id: string }, h: Handof
   await notify(
     h.owner_tg_id,
     `👋 <b>${esc(me)}</b>${device.tg_username ? ` (@${esc(device.tg_username)})` : ''} just met you through Chirp. Saved to your contacts, see /met.`,
-    meLink ? [[{ text: `Message ${me}`, url: meLink }]] : undefined,
+    [
+      ...(meLink ? [[{ text: `Message ${me}`, url: meLink }]] : []),
+      // Their next swap is one tap: the Mini App is right under the message.
+      [{ text: 'Chirp my card to someone', web_app: { url: `${env.publicUrl}/mini.html` } }],
+    ],
   );
   const otherLink = other.username ? `https://t.me/${other.username}` : null;
   await notify(
