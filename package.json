@@ -16,6 +16,7 @@
     "dev:glasses": "npm run dev -w @chirp/glasses",
     "build": "npm run build -w @chirp/web && npm run build -w @chirp/glasses",
     "e2e:room": "node --env-file=.env --import tsx scripts/e2e-room.ts",
+    "e2e:note": "node --env-file=.env --import tsx scripts/e2e-note.ts",
     "check:whitelist": "node scripts/check-network-whitelist.mjs",
     "icon": "node scripts/make-icon.mjs",
     "bench:channels": "node scripts/channel-bench.mjs",

@@ -53,10 +53,15 @@ async function logs(): Promise<string[]> {
   for (const e of d.entries) since = Math.max(since, e.id);
   return d.entries.map((e) => String(e.message));
 }
+const pending: string[] = [];
+/** Waits for a matching app log line; lines read past the match stay queued for the next wait. */
 async function waitLog(re: RegExp, ms: number): Promise<RegExpMatchArray | null> {
   const end = Date.now() + ms;
   while (Date.now() < end) {
-    for (const m of await logs().catch(() => [])) {
+    if (!pending.length) pending.push(...(await logs().catch(() => [])));
+    while (pending.length) {
+      const m = pending.shift()!;
+      if (process.env.E2E_DEBUG && m.startsWith('[chirp]') && !m.includes('event {')) console.log('   log:', m);
       const hit = m.match(re);
       if (hit) return hit;
     }
