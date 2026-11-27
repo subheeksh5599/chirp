@@ -43,6 +43,19 @@ export interface Deps {
 }
 
 export type MicSource = 'glasses' | 'phone';
+/**
+ * The official simulator reports itself as a G2 with this fixed placeholder serial (and battery 100),
+ * so the model alone can't tell real glasses from the simulator. Real glasses report their own serial.
+ */
+export const SIMULATOR_SN = 'S2001234567890';
+
+/** 'g2' only for real glasses; 'simulator' for the official simulator; 'none' when no device is reported. */
+export function hardwareLabel(info: { model?: string; sn?: string } | null | undefined): string {
+  if (!info?.model) return 'none';
+  if (info.sn === SIMULATOR_SN) return 'simulator';
+  return info.model;
+}
+
 /** `hold-start` is the touchpad going down on a long press; `hold` is its release. */
 export type Input = 'tap' | 'double' | 'swipe' | 'hold-start' | 'hold';
 

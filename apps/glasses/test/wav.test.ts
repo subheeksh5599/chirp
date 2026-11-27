@@ -18,3 +18,14 @@ describe('note audio', () => {
     expect(toBase64(bytes)).toBe(Buffer.from(bytes).toString('base64'));
   });
 });
+
+describe('hardware label sent with each hearing', () => {
+  it('only real glasses count as g2; the simulator is named as the simulator', async () => {
+    const { hardwareLabel, SIMULATOR_SN } = await import('../src/controller');
+    // exactly what the official simulator reports (captured from its console)
+    expect(hardwareLabel({ model: 'g2', sn: SIMULATOR_SN })).toBe('simulator');
+    expect(hardwareLabel({ model: 'g2', sn: 'S2009876543210' })).toBe('g2');
+    expect(hardwareLabel(null)).toBe('none');
+    expect(hardwareLabel({})).toBe('none');
+  });
+});

@@ -29,7 +29,7 @@ export type Outcome = 'ok' | 'sound-test' | 'not-a-code' | 'room-code-rejected' 
 
 /** What the glasses app reports about the hardware that heard a chirp. Anything else is stored as 'unknown'. */
 export type Hearing = { model?: unknown; mic?: unknown };
-const MODELS = ['g1', 'g2', 'none'];
+const MODELS = ['g1', 'g2', 'simulator', 'none'];
 const MICS = ['glasses', 'phone'];
 const pick = (v: unknown, allowed: string[]) => (typeof v === 'string' && allowed.includes(v) ? v : 'unknown');
 
@@ -162,7 +162,7 @@ export async function hearingTally() {
        FROM $S.resolves GROUP BY 1, 2 ORDER BY 1, 2`,
   );
   return {
-    note: 'model is what the Even Hub SDK reports (g2 = real glasses; none = the simulator, which has no device). decoded = chirps that resolved to a Chirp card or the sound test. unknown = hearings from before hardware tracking started (2026-11-27).',
+    note: 'model is what the glasses app reports from the Even Hub SDK: g2 = real glasses, simulator = the official simulator (it reports a G2 with a fixed placeholder serial), none = no device reported. decoded = chirps that resolved to a Chirp card or the sound test. unknown = hearings from before hardware tracking started (2026-11-27).',
     rows,
   };
 }

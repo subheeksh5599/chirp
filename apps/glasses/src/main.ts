@@ -9,7 +9,7 @@ import {
   waitForEvenAppBridge,
 } from '@evenrealities/even_hub_sdk';
 import { ChirpDecoder } from './decoder';
-import { Controller, type Input } from './controller';
+import { Controller, hardwareLabel, type Input } from './controller';
 import { httpApi } from './http';
 
 // Builds call VITE_API_BASE. The dev server has none and uses same-origin /api, which vite proxies to :8787.
@@ -76,8 +76,8 @@ async function main() {
   const api = httpApi(API_BASE);
   // The bot's name comes from the server, which reads it from its own Telegram token.
   const bot = await api.config!().then((r) => `@${r.bot}`).catch(() => 'the Chirp bot');
-  // 'g2' on real glasses; the simulator reports no device. Sent with each hearing so a real-G2 decode is visible in /api/hearing.
-  const model = await bridge.getDeviceInfo().then((d) => d?.model ?? 'none').catch(() => 'none');
+  // Sent with each hearing so a real-G2 decode is visible in /api/hearing. Only the label leaves the device, never the serial.
+  const model = await bridge.getDeviceInfo().then(hardwareLabel).catch(() => 'none');
   console.log(`[chirp] device model=${model}`);
   const c = new Controller({
     api,

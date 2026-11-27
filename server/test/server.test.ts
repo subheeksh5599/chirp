@@ -529,6 +529,7 @@ describe('which hardware heard a chirp (the real-G2 evidence trail)', () => {
     const { device } = await pairedDevice('Gee', 'gee');
     await heard(device, 'HTEST0000', Date.now(), { model: 'g2', mic: 'glasses' });
     await heard(device, 'HTEST0000', Date.now(), { model: 'g2', mic: 'phone' });
+    await heard(device, 'HTEST0000', Date.now(), { model: 'simulator', mic: 'glasses' });
     await heard(device, 'HTEST0000', Date.now(), { model: '<script>', mic: 42 });
     await heard(device, 'HTEST0000');
     const rows = await q<{ model: string; mic: string; outcome: string }>(
@@ -538,6 +539,7 @@ describe('which hardware heard a chirp (the real-G2 evidence trail)', () => {
     expect(rows.map((r) => `${r.model}/${r.mic}/${r.outcome}`)).toEqual([
       'g2/glasses/sound-test',
       'g2/phone/sound-test',
+      'simulator/glasses/sound-test',
       'unknown/unknown/sound-test',
       'unknown/unknown/sound-test',
     ]);

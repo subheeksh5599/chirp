@@ -7,7 +7,7 @@
 ### Any speaker can talk to your glasses.
 
 [![CI](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/subheeksh5599/chirp/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-147%20passing-2ecc71)
+![Tests](https://img.shields.io/badge/tests-148%20passing-2ecc71)
 [![Live](https://img.shields.io/badge/live-chirp--liart--six--38.vercel.app-6ef0a0)](https://chirp-liart-six-38.vercel.app)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 ![Stack](https://img.shields.io/badge/TypeScript%20·%20Even%20Hub%20SDK%20·%20Telegram%20·%20TON%20testnet-14151a)
@@ -43,8 +43,8 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Telegram bot | ✅ webhook set | message [@Chirp567_bot](https://t.me/Chirp567_bot); `GET /api/config` returns its name from its own token |
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator: Mac speaker → Mac mic, and a phone at 30 cm (10/10) and 1 m | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
-| Real glasses | ⏳ not tested | no device yet. Every hearing records the hardware the SDK reports, so the first real-G2 decode shows up at [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing). Owners: [2-minute check](#have-a-g2-check-it-in-two-minutes) |
-| Tests | ✅ 147 passing in CI; a fresh clone passes with nothing configured (140 pass, 7 need secrets and skip) | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
+| Real glasses | ⏳ not tested | no device yet. Every hearing records the hardware the SDK reports, so the first real-G2 decode (told apart from the simulator, which reports a G2 with a fixed placeholder serial) shows up at [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing). Owners: [2-minute check](#have-a-g2-check-it-in-two-minutes) |
+| Tests | ✅ 148 passing in CI; a fresh clone passes with nothing configured (141 pass, 7 need secrets and skip) | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
 
@@ -374,7 +374,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Presence anchor on TON testnet | ✅ record `27VHDCYT`: 6 room codes heard through the air by the simulator, signed, [anchored](https://testnet.tonviewer.com/transaction/1b108fba9be25c9a0dfb20689ee197785000e637338c2024aeb7af889f67240b) | `npm run presence:live`, then `npm run testnet -- anchor <id>`; [`/api/presence/27VHDCYT`](https://chirp-liart-six-38.vercel.app/api/presence/27VHDCYT) shows `signatureValid: true` |
 | Hand-off: contact cards, links, notes | ✅ | `server/test/server.test.ts` |
 | Two real Telegram accounts connected by one chirp | ✅ 2026-11-25: account B chirped its card from the Mini App on a phone; the simulator, paired to account A, heard `HBKPBM2ET`, a tap connected them, and both accounts list each other in `/met` (re-run after the fix that saves the contact on the sender's side too) | simulator log: `card connect` → `acted tap → Connected with …` |
-| AI follow-up suggestions after connecting | ✅ built and tested against the real model; not yet seen on the simulator lens | `server/test/server.test.ts` (`AI follow-up suggestions after connecting`); without a model key the card shows no suggestions |
+| AI follow-up suggestions after connecting | ✅ 2026-11-27: after a contact chirp through the air, the simulator lens showed `Connected with Sam` / `Send: "Nice meeting you, Sam!"` / `tap: send · 2×tap: next 1/3 · hold: note to Sam` / `swipe: back`, from the real model | `server/test/server.test.ts` (`AI follow-up suggestions after connecting`); without a model key the card shows no suggestions |
 | Voice note after connecting: hold, speak, tap to send | ✅ 2026-11-26: the simulator heard a contact card through the air, a tap connected, holding recorded 4.8 s of speech from the Mac speaker, Whisper returned "Nice meeting you. Let's grab coffee next week." as a draft on the lens, and a tap delivered it to a second real Telegram account (8/8 checks in 2 of 3 back-to-back runs; the third never heard the contact chirp, the known laptop-speaker-into-its-own-mic weakness in [MEASUREMENTS](docs/MEASUREMENTS.md). Every run that got past the chirp passed the voice steps) | `npm run e2e:note`, `server/test/server.test.ts` (`voice note after connecting`), `apps/glasses/test/controller.test.ts` |
 | Share link `t.me/Chirp567_bot?start=me` answers with one **Chirp my card** button; the "you met" message carries the Mini App button | ✅ | `server/test/server.test.ts` (`the share link (?start=me)…`, `…their next swap is one tap`) |
 | Home-screen icon offered after the first chirp | ⏳ built, not yet tried on a phone | `apps/web/src/mini.ts` (`offerHomeScreen`); shows only where Telegram supports it |
@@ -383,7 +383,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
 | `/heard`, `/met`, `/paper` | ✅ | `server/test/server.test.ts` |
 | Packs to `.ehpk` | ✅ | `npm run pack -w @chirp/glasses` |
-| Real glasses microphone | ⏳ not tested | no device. `/api/hearing` counts decodes by SDK model (`g2` vs `none` for the simulator) and mic; it has no `g2` row yet. Phone-mic fallback built (swipe on the root screen) |
+| Real glasses microphone | ⏳ not tested | no device. `/api/hearing` counts decodes by hardware (`g2` for real glasses, `simulator` for the official simulator, which reports a G2 with a fixed placeholder serial) and mic; it has no `g2` row yet. Phone-mic fallback built (swipe on the root screen) |
 | Through call, stream and podcast codecs | ✅ 20/20 clean on every modern codec; 12/20 on 16 kbps Opus with room noise; 0/20 on an 8 kHz phone line | `npm run bench:channels`, [MEASUREMENTS §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline) |
 | Phone as sender | ✅ 10 of 10 at 30 cm; 7 heard at 1 m (presses not counted) · ⏳ 3–5 m | [MEASUREMENTS §4c](docs/MEASUREMENTS.md#4c-a-phone-as-the-sender) |
 | Live call with the app's noise suppression | ⏳ not measured | needs two accounts on a call |
@@ -490,7 +490,7 @@ npm run dev:api               # API on :8787
 npm run dev:web               # sender tools on :5174 (proxies /api)
 npm run dev:glasses           # glasses app on :5173
 evenhub-simulator http://localhost:5173
-npm test                      # 147 tests; no .env needed (server tests use a throwaway schema)
+npm test                      # 148 tests; no .env needed (server tests use a throwaway schema)
 npm run e2e:room              # full acoustic loop in the simulator (plays sound)
 npm run e2e:note              # contact chirp → connect → hold and speak → draft → tap to send (plays sound and speech)
 npm run bench:codec           # codec decode rates at 16 kHz with noise
@@ -513,7 +513,7 @@ Chirp has not run on real G2 glasses yet. If you have a pair, this settles it:
 2. On another phone at half volume, open the [sound test](https://chirp-liart-six-38.vercel.app/test.html) and press play about 30 cm from the glasses, 10 times, a few seconds apart.
 3. The lens shows **Sound test heard** each time it decodes. If it doesn't, swipe on the root screen to switch to the phone mic and repeat.
 
-Every hearing is recorded with the device model the Even Hub SDK reports and the mic that heard it, so the result is public without trusting anyone's word: [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing) lists heard vs. decoded counts per model and mic. A `g2 / glasses` row with decodes is the proof. There is none yet: the 41 hearings from before tracking started show as `unknown`, and simulator runs since then show as `none`.
+Every hearing is recorded with the device model the Even Hub SDK reports and the mic that heard it, so the result is public without trusting anyone's word: [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing) lists heard vs. decoded counts per model and mic. A `g2 / glasses` row with decodes is the proof. There is none yet: the 41 hearings from before tracking started show as `unknown`, and simulator runs show as `simulator`. Only the label is sent, never the glasses' serial number.
 
 ## Tests
 
@@ -531,10 +531,10 @@ Every hearing is recorded with the device model the Even Hub SDK reports and the
 | `scripts/test/icon.test.ts` | 4 |
 | `scripts/test/privacy.test.ts` | 4 |
 | `apps/web/test/envelope.test.ts` | 3 |
-| `apps/glasses/test/wav.test.ts` | 2 |
-| **Total** | **147** |
+| `apps/glasses/test/wav.test.ts` | 3 |
+| **Total** | **148** |
 
-**On a fresh clone, `npm ci && npm test` passes with nothing configured: 140 pass, 7 skip.** With no `.env`, the server and controller tests run on [PGlite](https://pglite.dev) (the real Postgres engine compiled to WASM, in-process) with throwaway local values: a test bot token, a fresh signing key per run, and a public testnet wallet. The 7 that skip need a real secret: 6 call Groq for real (`GROQ_API_KEY`: 5 send speech to Whisper, 1 asks the suggestion model), and 1 reads the bot's name with a real `TELEGRAM_BOT_TOKEN`. With the secrets (as in CI) all 147 run against the real Neon database in a throwaway schema. The whitelist test builds the glasses app itself, so it checks this commit's bundle and never a stale one.
+**On a fresh clone, `npm ci && npm test` passes with nothing configured: 141 pass, 7 skip.** With no `.env`, the server and controller tests run on [PGlite](https://pglite.dev) (the real Postgres engine compiled to WASM, in-process) with throwaway local values: a test bot token, a fresh signing key per run, and a public testnet wallet. The 7 that skip need a real secret: 6 call Groq for real (`GROQ_API_KEY`: 5 send speech to Whisper, 1 asks the suggestion model), and 1 reads the bot's name with a real `TELEGRAM_BOT_TOKEN`. With the secrets (as in CI) all 148 run against the real Neon database in a throwaway schema. The whitelist test builds the glasses app itself, so it checks this commit's bundle and never a stale one.
 
 The property tests draw hundreds of random codes, mutations and hearing patterns per rule from a fixed seed, so a failure repeats. The market and testnet tests call the live public APIs. Telegram messages in tests are recorded instead of sent, because the test users don't exist; production always sends.
 
