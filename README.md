@@ -43,7 +43,7 @@ A **frame** is the 9 characters one chirp carries. A **slot** is a 5-second wind
 | Telegram bot | ✅ webhook set | message [@Chirp567_bot](https://t.me/Chirp567_bot); `GET /api/config` returns its name from its own token |
 | Glasses app | ✅ runs in the simulator, packs to `.ehpk` | `npm run e2e:room` (5/5 checks), `npm run pack -w @chirp/glasses` |
 | Sound through the air | ✅ simulator: Mac speaker → Mac mic, and a phone at 30 cm (10/10) and 1 m | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) |
-| Real glasses | ⏳ not tested | no device yet. Every hearing records the hardware the SDK reports, so the first real-G2 decode (told apart from the simulator, which reports a G2 with a fixed placeholder serial) shows up at [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing). Owners: [2-minute check](#have-a-g2-check-it-in-two-minutes) |
+| Real glasses | ⏳ not tested | no device yet; tested in the official Even Hub simulator, and the phone-mic fallback is built in |
 | Tests | ✅ 148 passing in CI; a fresh clone passes with nothing configured (141 pass, 7 need secrets and skip) | [GitHub Actions](https://github.com/subheeksh5599/chirp/actions) |
 
 ## The 20-second pitch
@@ -90,7 +90,6 @@ The console, link, bill and Mini App pages show the lens text the server will se
 - [Tech stack](#tech-stack)
 - [Project layout](#project-layout)
 - [Run it yourself](#run-it-yourself)
-- [Have a G2? Check it in two minutes](#have-a-g2-check-it-in-two-minutes)
 - [Tests](#tests)
 - [Built on](#built-on)
 - [License](#license)
@@ -383,7 +382,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 | Stream markers with live odds, paper positions | ✅ | `server/test/server.test.ts` (live market data) |
 | `/heard`, `/met`, `/paper` | ✅ | `server/test/server.test.ts` |
 | Packs to `.ehpk` | ✅ | `npm run pack -w @chirp/glasses` |
-| Real glasses microphone | ⏳ not tested | no device. `/api/hearing` counts decodes by hardware (`g2` for real glasses, `simulator` for the official simulator, which reports a G2 with a fixed placeholder serial) and mic; it has no `g2` row yet. Phone-mic fallback built (swipe on the root screen) |
+| Real glasses microphone | ⏳ not tested | no device; phone-mic fallback built (swipe on the root screen) |
 | Through call, stream and podcast codecs | ✅ 20/20 clean on every modern codec; 12/20 on 16 kbps Opus with room noise; 0/20 on an 8 kHz phone line | `npm run bench:channels`, [MEASUREMENTS §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline) |
 | Phone as sender | ✅ 10 of 10 at 30 cm; 7 heard at 1 m (presses not counted) · ⏳ 3–5 m | [MEASUREMENTS §4c](docs/MEASUREMENTS.md#4c-a-phone-as-the-sender) |
 | Live call with the app's noise suppression | ⏳ not measured | needs two accounts on a call |
@@ -437,7 +436,7 @@ Checked only when true on a real run.
 - **Livestream leakage.** Someone watching a low-delay live stream of the room hears the codes too. Slot tolerance is ±1 (about 10 seconds), so a stream with less delay than that leaks valid codes. Real stream delay hasn't been measured yet.
 - **Audible.** Every chirp is a short, soft chime. Fine in talks and streams; it shouldn't repeat often.
 - **Senders opt in.** Speakers, hosts and shops choose to chirp. Public spaces are later.
-- **Real glasses untested.** The glasses mic path may process audio differently from the simulator (noise suppression could eat steady tones). The phone-mic fallback is one swipe away, and [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing) will show the first real-G2 result.
+- **Real glasses untested.** The glasses mic path may process audio differently from the simulator (noise suppression could eat steady tones). The phone-mic fallback is one swipe away.
 - **Through-the-air numbers are short-range so far.** A phone sender decoded 10 of 10 at 30 cm and 7 at 1 m; 3–5 m, chatter and music are still open.
 
 ## Security and privacy
@@ -504,16 +503,6 @@ npm run testnet -- anchor <id> # pay a presence record's anchor and run the bot'
 ```
 
 The glasses app reads its server address from `VITE_API_BASE` (`apps/glasses/.env.production` for builds). Deploying: `npx vercel deploy --prod` with the same variables set in the Vercel project.
-
-## Have a G2? Check it in two minutes
-
-Chirp has not run on real G2 glasses yet. If you have a pair, this settles it:
-
-1. Install `chirp.ehpk` from the [release](https://github.com/subheeksh5599/chirp/releases/tag/v0.1.0), open Chirp, and send the 6-digit code on the lens to [@Chirp567_bot](https://t.me/Chirp567_bot).
-2. On another phone at half volume, open the [sound test](https://chirp-liart-six-38.vercel.app/test.html) and press play about 30 cm from the glasses, 10 times, a few seconds apart.
-3. The lens shows **Sound test heard** each time it decodes. If it doesn't, swipe on the root screen to switch to the phone mic and repeat.
-
-Every hearing is recorded with the device model the Even Hub SDK reports and the mic that heard it, so the result is public without trusting anyone's word: [`/api/hearing`](https://chirp-liart-six-38.vercel.app/api/hearing) lists heard vs. decoded counts per model and mic. A `g2 / glasses` row with decodes is the proof. There is none yet: the 41 hearings from before tracking started show as `unknown`, and simulator runs show as `simulator`. Only the label is sent, never the glasses' serial number.
 
 ## Tests
 
