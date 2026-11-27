@@ -397,7 +397,7 @@ Root screen: `Chirp · listening (glasses mic)` · `hold: pause · swipe: mic ·
 Checked only when true on a real run.
 
 **Works end to end**
-- [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (contacts, links, bills), sync (markers, paper positions) all run against production services
+- [x] Broadcast (slides, live polls, subtitles), presence (rule, signed record), hand-off (single-use contacts and bills, links, AI follow-ups, voice notes), markets (markers, paper positions) all run against production services
 - [x] Every heard item lands in Telegram and shows in `/heard`
 - [x] Room-code replay (an old slot), forgery and single-shared-code attacks are refused by tests
 - [x] Decode rates published through call, stream and podcast codecs ([measurements §5](docs/MEASUREMENTS.md#5-through-call-and-stream-codecs-offline))
